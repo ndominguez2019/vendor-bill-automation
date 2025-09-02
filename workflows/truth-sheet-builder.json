@@ -1,0 +1,1239 @@
+{
+  "name": "AssureIV – NetSuite Truth Sheet Builder",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "triggerAtHour": 7,
+              "triggerAtMinute": 30
+            }
+          ]
+        }
+      },
+      "id": "300e58ac-95d3-48e2-a58f-01850cd06939",
+      "name": "Schedule Trigger",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        1424,
+        -144
+      ]
+    },
+    {
+      "parameters": {
+        "url": "https://graph.microsoft.com/v1.0/users/n8n-inbox@assureiv.com/mailFolders/inbox/messages?$top=10&$orderby=receivedDateTime desc",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "oAuth2Api",
+        "options": {}
+      },
+      "id": "3309f7e5-0f16-4094-8c72-01b1ff4a70ce",
+      "name": "Fetch NetSuite Email Attachments",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        928,
+        320
+      ],
+      "credentials": {
+        "oAuth2Api": {
+          "id": "bA633s3OTbBjnItC",
+          "name": "Microsoft Graph OAuth2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "return $json.value.map((email, index) => ({\n  json: {\n    index,\n    subject: email.subject,\n    sender: email.sender?.emailAddress?.address,\n    messageId: email.id,\n    received: email.receivedDateTime,\n    hasAttachments: email.hasAttachments\n  }\n}));\n"
+      },
+      "id": "bc841629-e0ce-413e-95c4-9013047000eb",
+      "name": "Extract Email Metadata",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1152,
+        320
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "0f601160-d43b-40f6-b177-886dbbf5f90d",
+              "leftValue": "={{ $json.isNetSuiteReport }}\n",
+              "rightValue": "true",
+              "operator": {
+                "type": "string",
+                "operation": "contains"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {
+          "looseTypeValidation": false
+        }
+      },
+      "id": "2bfe076f-a5bd-48cd-ba05-8b3893fe002e",
+      "name": "Filter NetSuite Emails",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        1520,
+        320
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const results = [];\n\nfor (let i = 0; i < $items().length; i++) {\n  const email = $items()[i].json;\n  const attachments = email.value;\n\n  for (let attachment of attachments) {\n    results.push({\n      json: {\n        filename: attachment.name,\n        data: attachment.contentBytes,\n        subject: email.subject || null\n      }\n    });\n  }\n}\n\nreturn results;\n"
+      },
+      "id": "7c8368a8-021e-4db3-a3c5-8da0a5bd7fa9",
+      "name": "Extract Attachment Data",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2144,
+        -144
+      ]
+    },
+    {
+      "parameters": {
+        "options": {
+          "delimiter": ",",
+          "encoding": "utf-8",
+          "headerRow": true
+        }
+      },
+      "id": "e450a97c-2496-479e-817b-23bb60e58f68",
+      "name": "Parse CSV to JSON",
+      "type": "n8n-nodes-base.extractFromFile",
+      "typeVersion": 1,
+      "position": [
+        2560,
+        -144
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "return $input.all().map(item => {\n  const subject = item.json.subject || '';\n  const isNetSuiteReport = subject.includes(\"Purchase Order Report\") || subject.includes(\"Item Receipt Report\");\n\n  return {\n    json: {\n      ...item.json,\n      isNetSuiteReport\n    }\n  };\n});\n"
+      },
+      "id": "2b6c7cf9-a17f-41d2-85b9-7da575b4151a",
+      "name": "Tag Email Type",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1344,
+        320
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "toBinary",
+        "sourceProperty": "data",
+        "options": {
+          "fileName": "name"
+        }
+      },
+      "id": "35de2ec4-e846-4219-840e-029733ca9f61",
+      "name": "Convert Attachment to File",
+      "type": "n8n-nodes-base.convertToFile",
+      "typeVersion": 1.1,
+      "position": [
+        2352,
+        -144
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "924f8b96-5e51-4bea-bae7-5b510586585b",
+              "leftValue": "={{ $json.subject.includes(\"Purchase Order Report\") }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "4b0bbbea-233b-4e8d-8934-d1fdcd501143",
+      "name": "IF – Route to PO or IR",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        1744,
+        160
+      ]
+    },
+    {
+      "parameters": {
+        "url": "=https://graph.microsoft.com/v1.0/users/n8n-inbox@assureiv.com/messages/{{ encodeURIComponent($json.messageId) }}/attachments",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "oAuth2Api",
+        "options": {}
+      },
+      "id": "a4ccab47-8e81-48d4-bd13-e117872e3950",
+      "name": "Fetch Attachments - IR Branch",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1968,
+        368
+      ],
+      "credentials": {
+        "oAuth2Api": {
+          "id": "bA633s3OTbBjnItC",
+          "name": "Microsoft Graph OAuth2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const results = [];\n\nfor (let i = 0; i < $items().length; i++) {\n  const email = $items()[i].json;\n  const attachments = email.value;\n\n  for (let attachment of attachments) {\n    results.push({\n      json: {\n        filename: attachment.name,\n        data: attachment.contentBytes,\n        subject: email.subject || null\n      }\n    });\n  }\n}\n\nreturn results;\n"
+      },
+      "id": "64ead1b8-45d0-4800-8a1f-88ccf146c82e",
+      "name": "Extract Attachment Data - IR Branch",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2192,
+        368
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "toBinary",
+        "sourceProperty": "data",
+        "options": {
+          "fileName": "name"
+        }
+      },
+      "id": "53ec5465-0325-4e03-9240-edb07511c336",
+      "name": "Convert Attachment to File - IR B.",
+      "type": "n8n-nodes-base.convertToFile",
+      "typeVersion": 1.1,
+      "position": [
+        2400,
+        368
+      ]
+    },
+    {
+      "parameters": {
+        "options": {
+          "delimiter": ",",
+          "encoding": "utf-8",
+          "headerRow": true
+        }
+      },
+      "id": "7748a5b9-a544-4264-8870-b474ffa68045",
+      "name": "Parse CSV to JSON - IR B.",
+      "type": "n8n-nodes-base.extractFromFile",
+      "typeVersion": 1,
+      "position": [
+        2624,
+        368
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "return items.map(item => {\n  const raw = item.json;\n  return { json: raw };\n});\n"
+      },
+      "id": "1daa1c0b-f00d-45ea-a94c-fe5d3b9b6a77",
+      "name": "Normalize IRs",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2848,
+        368
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "b5561257-d788-4675-a82e-61fbecfe169c",
+              "name": "dummy",
+              "value": "true",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "27d1e539-f068-4c97-b1c7-c1799f5f1401",
+      "name": "Set Dummy - No quota errors - IR",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.3,
+      "position": [
+        3024,
+        464
+      ],
+      "executeOnce": true
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "b5561257-d788-4675-a82e-61fbecfe169c",
+              "name": "dummy",
+              "value": "true",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "591aa00b-efc8-44a1-8708-a894582f689a",
+      "name": "Set Dummy - No quota errors PO",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.3,
+      "position": [
+        2960,
+        -48
+      ],
+      "executeOnce": true
+    },
+    {
+      "parameters": {
+        "jsCode": "function clean(val) {\n  return (val ?? '').toString().trim().toLowerCase();\n}\n\n// Helper to get a field regardless of trailing/leading spaces in header\nfunction get(row, fieldName) {\n  const foundKey = Object.keys(row).find(k => k.trim() === fieldName.trim());\n  return foundKey ? row[foundKey] : '';\n}\n\nconst irList = $('Normalize IRs').all().map(i => i.json);\nconst sheetRows = $input.all().map(i => i.json);\n\nconst existingKeys = new Set(\n  sheetRows.map(row =>\n    `${clean(get(row, \"Document Number\"))}|${clean(get(row, \"Internal ID\"))}`\n  )\n);\n\nconst newIRs = irList.filter(ir => {\n  const key = `${clean(get(ir, \"Document Number\"))}|${clean(get(ir, \"Internal ID\"))}`;\n  return !existingKeys.has(key);\n});\n\nreturn newIRs.map(ir => ({ json: ir }));\n"
+      },
+      "id": "ff758816-5417-4122-97f1-01016e2d9a10",
+      "name": "Compare NormalizedIRs vs LookupIRs",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3408,
+        192
+      ],
+      "alwaysOutputData": false
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1Ea6OPRW7l4RiacA6ixwce58jaKusyQ25sC3AbhJfjl0",
+          "mode": "list",
+          "cachedResultName": "AssureIV – NetSuite Truth Tables",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1Ea6OPRW7l4RiacA6ixwce58jaKusyQ25sC3AbhJfjl0/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "PO Memory",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1Ea6OPRW7l4RiacA6ixwce58jaKusyQ25sC3AbhJfjl0/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Status": "={{ $json.Status }}",
+            "Internal ID": "={{ $json[\"Internal ID\"] }}",
+            "Amount": "={{ $json.Amount }}",
+            "Memo": "={{ $json.Memo }}",
+            "Account": "={{ $json.Account }}",
+            "Name": "={{ $json.Name }}",
+            "Document Number": "={{ $json[\"Document Number\"] }}",
+            "Type": "={{ $json.Type }}",
+            "Period": "={{ $json.Period }}",
+            "Date": "={{ $json.Date }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Date",
+              "displayName": "Date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Period",
+              "displayName": "Period",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Type",
+              "displayName": "Type",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Document Number",
+              "displayName": "Document Number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Name",
+              "displayName": "Name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Account",
+              "displayName": "Account",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Memo",
+              "displayName": "Memo",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Amount",
+              "displayName": "Amount",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Internal ID",
+              "displayName": "Internal ID",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Status",
+              "displayName": "Status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "0c71e278-c3d4-48bc-8214-d3a21089cf70",
+      "name": "Append New POs to Google Sheet -",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.3,
+      "position": [
+        3744,
+        -464
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "lyIbvwUMqwDkiSHw",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1Ea6OPRW7l4RiacA6ixwce58jaKusyQ25sC3AbhJfjl0",
+          "mode": "list",
+          "cachedResultName": "AssureIV – NetSuite Truth Tables",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1Ea6OPRW7l4RiacA6ixwce58jaKusyQ25sC3AbhJfjl0/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 998727523,
+          "mode": "list",
+          "cachedResultName": "IR Memory",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1Ea6OPRW7l4RiacA6ixwce58jaKusyQ25sC3AbhJfjl0/edit#gid=998727523"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Date": "={{ $json.Date }}",
+            "Period ": "={{ $json.Period }}",
+            "Type": "={{ $json.Type }}",
+            "Document Number ": "={{ $json[\"Document Number\"] }}",
+            "Name": "={{ $json.Name }}",
+            "Created From ": "={{ $json[\"Created From\"] }}",
+            "Internal ID": "={{ $json[\"Internal ID\"] }}",
+            "Amount": "={{ $json.Amount }}",
+            "Account": "={{ $json.Account }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Date",
+              "displayName": "Date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Period ",
+              "displayName": "Period ",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Type",
+              "displayName": "Type",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Document Number ",
+              "displayName": "Document Number ",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Name",
+              "displayName": "Name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Account",
+              "displayName": "Account",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Amount",
+              "displayName": "Amount",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Internal ID",
+              "displayName": "Internal ID",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Created From ",
+              "displayName": "Created From ",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "84522e71-0b3a-4df6-9520-d774be6fa3b2",
+      "name": "Append new IRs to Google Sheet -",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.3,
+      "position": [
+        3632,
+        192
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "lyIbvwUMqwDkiSHw",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "=https://graph.microsoft.com/v1.0/users/n8n-inbox@assureiv.com/messages/{{ encodeURIComponent($json.messageId) }}/attachments",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "oAuth2Api",
+        "options": {}
+      },
+      "id": "71c8a386-4283-4480-bf64-4f14ab414ed3",
+      "name": "Fetch Attachments PO Branch",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1968,
+        -144
+      ],
+      "credentials": {
+        "oAuth2Api": {
+          "id": "bA633s3OTbBjnItC",
+          "name": "Microsoft Graph OAuth2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "function clean(val) {\n  return (val ?? '').toString().trim().toLowerCase();\n}\n\nfunction get(row, fieldName) {\n  const foundKey = Object.keys(row).find(k => k.trim() === fieldName.trim());\n  return foundKey ? row[foundKey] : '';\n}\n\nconst poList = $('NormalizedPOs').all().map(i => i.json);\nconst sheetRows = $input.all().map(i => i.json);\n\n// Keys from sheet (cross-run duplicates)\nconst existingMap = new Map(\n  sheetRows.map(row => [\n    `${clean(get(row, \"Document Number\"))}|${clean(get(row, \"Internal ID\"))}`,\n    row\n  ])\n);\n\n// Keys seen in current execution (first-run duplicates)\nconst seenKeys = new Set();\n\nconst results = poList.map(po => {\n  const key = `${clean(get(po, \"Document Number\"))}|${clean(get(po, \"Internal ID\"))}`;\n  const existing = existingMap.get(key);\n  const isDuplicateInSheet = !!existing;\n  const isDuplicateInRun = seenKeys.has(key);\n\n  // Mark as seen for future iterations in this run\n  seenKeys.add(key);\n\n  let statusChanged = false;\n  if (existing) {\n    const incomingStatus = clean(get(po, \"Status\"));\n    const existingStatus = clean(get(existing, \"Status\"));\n    statusChanged = incomingStatus !== existingStatus;\n  }\n\n  return {\n    json: {\n      ...po,\n      isDuplicate: isDuplicateInSheet || isDuplicateInRun,\n      statusChanged\n    }\n  };\n});\n\n// ✅ Final safeguard: Keep only the first occurrence per Internal ID\nconst uniqueByInternalId = [];\nconst seenInternalIds = new Set();\n\nfor (const item of results) {\n  const id = item.json[\"Internal ID\"]?.toString().trim();\n  if (!seenInternalIds.has(id)) {\n    seenInternalIds.add(id);\n    uniqueByInternalId.push(item);\n  }\n}\n\nreturn uniqueByInternalId;\n"
+      },
+      "id": "1f362388-06e2-46e2-ac5f-eeaf4601aa82",
+      "name": "Compare and Update PO Entries",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3344,
+        -304
+      ],
+      "alwaysOutputData": false
+    },
+    {
+      "parameters": {
+        "jsCode": "return items.map(item => {\n  const raw = item.json;\n  return { json: raw };\n});\n"
+      },
+      "id": "7bccedc8-37ac-48dc-a162-0745df3f28e9",
+      "name": "NormalizedPOs",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2768,
+        -144
+      ]
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1Ea6OPRW7l4RiacA6ixwce58jaKusyQ25sC3AbhJfjl0",
+          "mode": "list",
+          "cachedResultName": "AssureIV – NetSuite Truth Tables",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1Ea6OPRW7l4RiacA6ixwce58jaKusyQ25sC3AbhJfjl0/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "PO Memory",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1Ea6OPRW7l4RiacA6ixwce58jaKusyQ25sC3AbhJfjl0/edit#gid=0"
+        },
+        "options": {}
+      },
+      "id": "5b5a7875-48ae-48e8-b7d3-56aef7899fc2",
+      "name": "LookupPOs",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.3,
+      "position": [
+        3184,
+        -48
+      ],
+      "alwaysOutputData": true,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "lyIbvwUMqwDkiSHw",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1Ea6OPRW7l4RiacA6ixwce58jaKusyQ25sC3AbhJfjl0",
+          "mode": "list",
+          "cachedResultName": "AssureIV – NetSuite Truth Tables",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1Ea6OPRW7l4RiacA6ixwce58jaKusyQ25sC3AbhJfjl0/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 998727523,
+          "mode": "list",
+          "cachedResultName": "IR Memory",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1Ea6OPRW7l4RiacA6ixwce58jaKusyQ25sC3AbhJfjl0/edit#gid=998727523"
+        },
+        "options": {}
+      },
+      "id": "ac3370ab-30bc-448b-86af-384df60742b9",
+      "name": "LookupIRs",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.3,
+      "position": [
+        3248,
+        464
+      ],
+      "alwaysOutputData": true,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "lyIbvwUMqwDkiSHw",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "value": "1Ea6OPRW7l4RiacA6ixwce58jaKusyQ25sC3AbhJfjl0",
+          "mode": "list",
+          "cachedResultName": "AssureIV – NetSuite Truth Tables",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1Ea6OPRW7l4RiacA6ixwce58jaKusyQ25sC3AbhJfjl0/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "PO Memory",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1Ea6OPRW7l4RiacA6ixwce58jaKusyQ25sC3AbhJfjl0/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Status": "={{ $json.Status }}",
+            "Internal ID": "={{ $json['Internal ID'] }}"
+          },
+          "matchingColumns": [
+            "Internal ID"
+          ],
+          "schema": [
+            {
+              "id": "Date",
+              "displayName": "Date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Period",
+              "displayName": "Period",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Type",
+              "displayName": "Type",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Document Number",
+              "displayName": "Document Number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Name",
+              "displayName": "Name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Account",
+              "displayName": "Account",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Memo",
+              "displayName": "Memo",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Amount",
+              "displayName": "Amount",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Internal ID",
+              "displayName": "Internal ID",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Status",
+              "displayName": "Status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "row_number",
+              "displayName": "row_number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "readOnly": true,
+              "removed": true
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "5652ff34-4117-431e-98ca-fbd07c53df81",
+      "name": "Update PO \"Status\"",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.3,
+      "position": [
+        3952,
+        -320
+      ],
+      "alwaysOutputData": true,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "lyIbvwUMqwDkiSHw",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "e722057a-a6dd-46aa-8e91-1b8213765bf4",
+              "leftValue": "={{ $json.isDuplicate }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "false",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "4fb557eb-df0b-4f3a-bb7a-b89b5c0d8f9b",
+      "name": "Is Duplicate?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        3552,
+        -304
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "6019b9b7-b0a1-40d1-9122-ad671c584440",
+              "leftValue": "={{ $json.statusChanged }}",
+              "rightValue": false,
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "452e9a15-1ac6-49f0-acce-575562cfa1bc",
+      "name": "Status Changed?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        3744,
+        -160
+      ]
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Fetch NetSuite Email Attachments",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch NetSuite Email Attachments": {
+      "main": [
+        [
+          {
+            "node": "Extract Email Metadata",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract Email Metadata": {
+      "main": [
+        [
+          {
+            "node": "Tag Email Type",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract Attachment Data": {
+      "main": [
+        [
+          {
+            "node": "Convert Attachment to File",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Tag Email Type": {
+      "main": [
+        [
+          {
+            "node": "Filter NetSuite Emails",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filter NetSuite Emails": {
+      "main": [
+        [
+          {
+            "node": "IF – Route to PO or IR",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Convert Attachment to File": {
+      "main": [
+        [
+          {
+            "node": "Parse CSV to JSON",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse CSV to JSON": {
+      "main": [
+        [
+          {
+            "node": "NormalizedPOs",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF – Route to PO or IR": {
+      "main": [
+        [
+          {
+            "node": "Fetch Attachments PO Branch",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Fetch Attachments - IR Branch",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Attachments - IR Branch": {
+      "main": [
+        [
+          {
+            "node": "Extract Attachment Data - IR Branch",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract Attachment Data - IR Branch": {
+      "main": [
+        [
+          {
+            "node": "Convert Attachment to File - IR B.",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Convert Attachment to File - IR B.": {
+      "main": [
+        [
+          {
+            "node": "Parse CSV to JSON - IR B.",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse CSV to JSON - IR B.": {
+      "main": [
+        [
+          {
+            "node": "Normalize IRs",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Normalize IRs": {
+      "main": [
+        [
+          {
+            "node": "Set Dummy - No quota errors - IR",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Compare NormalizedIRs vs LookupIRs",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set Dummy - No quota errors PO": {
+      "main": [
+        [
+          {
+            "node": "LookupPOs",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set Dummy - No quota errors - IR": {
+      "main": [
+        [
+          {
+            "node": "LookupIRs",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Compare NormalizedIRs vs LookupIRs": {
+      "main": [
+        [
+          {
+            "node": "Append new IRs to Google Sheet -",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Attachments PO Branch": {
+      "main": [
+        [
+          {
+            "node": "Extract Attachment Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Compare and Update PO Entries": {
+      "main": [
+        [
+          {
+            "node": "Is Duplicate?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "NormalizedPOs": {
+      "main": [
+        [
+          {
+            "node": "Set Dummy - No quota errors PO",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Compare and Update PO Entries",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "LookupPOs": {
+      "main": [
+        [
+          {
+            "node": "Compare and Update PO Entries",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "LookupIRs": {
+      "main": [
+        [
+          {
+            "node": "Compare NormalizedIRs vs LookupIRs",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Is Duplicate?": {
+      "main": [
+        [
+          {
+            "node": "Append New POs to Google Sheet -",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Status Changed?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Status Changed?": {
+      "main": [
+        [
+          {
+            "node": "Update PO \"Status\"",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "f30dea98-8080-4dc5-9583-45df2378783c",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "57c3611031e2d3197c48b10c51ef2e24bc752c99196ff3eac15828caf8194b3d"
+  },
+  "id": "VTJrrcZYdluo0OsO",
+  "tags": []
+}

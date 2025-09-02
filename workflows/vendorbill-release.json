@@ -1,0 +1,457 @@
+{
+  "name": "AP Automation - VendorBill Release (On-Hold)",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "hours"
+            }
+          ]
+        }
+      },
+      "id": "ec5e40ed-56ef-4b3a-a95b-a08ef66b90e6",
+      "name": "Schedule Trigger1",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -480,
+        272
+      ]
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1OpM6d_xpnP3qotvRSk5PzoUCt2AShF2_-crVZQtL2k4",
+          "mode": "list",
+          "cachedResultName": "VendorBill Memory",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1OpM6d_xpnP3qotvRSk5PzoUCt2AShF2_-crVZQtL2k4/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "VendorBill Memory",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1OpM6d_xpnP3qotvRSk5PzoUCt2AShF2_-crVZQtL2k4/edit#gid=0"
+        },
+        "options": {}
+      },
+      "id": "5d73b7e4-20a0-430a-975e-7558b58c0487",
+      "name": "Lookup VendorBill Memory - 2",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.3,
+      "position": [
+        -640,
+        592
+      ],
+      "alwaysOutputData": true,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "lyIbvwUMqwDkiSHw",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "2eb8a8cb-e379-4fb6-8934-25c420c9c060",
+              "leftValue": "={{ $json.Status }}",
+              "rightValue": "on-hold",
+              "operator": {
+                "type": "string",
+                "operation": "contains"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "566f859d-f0bc-4d39-b7a5-cee307f83692",
+      "name": "IF – Filter On-Hold VendorBills",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        -400,
+        592
+      ]
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1Ea6OPRW7l4RiacA6ixwce58jaKusyQ25sC3AbhJfjl0",
+          "mode": "list",
+          "cachedResultName": "AssureIV – NetSuite Truth Tables",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1Ea6OPRW7l4RiacA6ixwce58jaKusyQ25sC3AbhJfjl0/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "PO Memory",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1Ea6OPRW7l4RiacA6ixwce58jaKusyQ25sC3AbhJfjl0/edit#gid=0"
+        },
+        "filtersUI": {
+          "values": [
+            {
+              "lookupColumn": "Document Number",
+              "lookupValue": "={{ $json[\"PO Number\"] }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "2a9e8d95-a5c7-4b48-8492-3a1d19c101d6",
+      "name": "Lookup PO in PO Memory",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.3,
+      "position": [
+        -176,
+        464
+      ],
+      "alwaysOutputData": true,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "lyIbvwUMqwDkiSHw",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "ccdee8a5-c90d-4c52-b9d2-9eb4aea772c2",
+              "leftValue": "{{ $json[\"Status\"] }}",
+              "rightValue": "Pending Bill",
+              "operator": {
+                "type": "string",
+                "operation": "contains"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "22a6638a-42fd-4356-a542-6e951fefa845",
+      "name": "IF – PO Now Pending Bill",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        0,
+        448
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://11293253-sb1.suitetalk.api.netsuite.com/services/rest/record/v1/purchaseOrder/{{ $json[\"Internal ID\"] }}/!transform/vendorBill\n",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "oAuth2Api",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Prefer",
+              "value": "return=representation"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "raw",
+        "rawContentType": "application/json",
+        "body": "={\n  \"memo\": \"Auto-created via AP Automation for {{ new Date().toISOString().split('T')[0] }}\"\n}\n",
+        "options": {}
+      },
+      "id": "0b7b9126-366a-4f98-8f61-f1f022ed630a",
+      "name": "POST to NetSuite - On Hold Prev",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        240,
+        352
+      ],
+      "credentials": {
+        "oAuth2Api": {
+          "id": "ev7daFDajZQUwpwi",
+          "name": "NetSuite OAuth2 - API Role (1671)"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "value": "1OpM6d_xpnP3qotvRSk5PzoUCt2AShF2_-crVZQtL2k4",
+          "mode": "list",
+          "cachedResultName": "VendorBill Memory",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1OpM6d_xpnP3qotvRSk5PzoUCt2AShF2_-crVZQtL2k4/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "VendorBill Memory",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1OpM6d_xpnP3qotvRSk5PzoUCt2AShF2_-crVZQtL2k4/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Status": "posted",
+            "Date Added": "{{ new Date().toISOString().split('T')[0] }}"
+          },
+          "matchingColumns": [
+            "PO Number"
+          ],
+          "schema": [
+            {
+              "id": "PO Number",
+              "displayName": "PO Number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Invoice Number",
+              "displayName": "Invoice Number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Filename",
+              "displayName": "Filename",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Internal ID",
+              "displayName": "Internal ID",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Date Added",
+              "displayName": "Date Added",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Status",
+              "displayName": "Status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Reason",
+              "displayName": "Reason",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "row_number",
+              "displayName": "row_number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "readOnly": true,
+              "removed": true
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "289f5b98-687d-4e36-9c08-875e1fa3f10f",
+      "name": "Update VendorBill Memory",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.3,
+      "position": [
+        448,
+        352
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "lyIbvwUMqwDkiSHw",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const rows = $input.all().map(item => item.json);\n\nlet html = `<div style=\"font-family:Arial; line-height:1.5; padding:1em;\">\n<h2 style=\"color:#d93025;\">🚨 On-Hold Invoices Report</h2>\n<p><strong>Total:</strong> ${rows.length}</p>\n<table border=\"1\" cellpadding=\"5\" cellspacing=\"0\" style=\"border-collapse:collapse; width:100%;\">\n<tr style=\"background-color:#f2f2f2;\">\n<th>PO Number</th>\n<th>Invoice Number</th>\n<th>Filename</th>\n<th>Internal ID</th>\n<th>Date Added</th>\n<th>Reason</th>\n</tr>`;\n\nif (rows.length === 0) {\n  html += `<tr><td colspan=\"6\">📢 No invoices are currently on hold due to partial receipt.</td></tr>`;\n} else {\n  html += rows.map(row => `\n    <tr>\n      <td>${row[\"PO Number\"]}</td>\n      <td>${row[\"Invoice Number\"]}</td>\n      <td>${row[\"Filename\"]}</td>\n      <td>${row[\"Internal ID\"]}</td>\n      <td>${row[\"Date Added\"]}</td>\n      <td>${row[\"Reason\"]}</td>\n    </tr>`).join(\"\");\n}\n\nhtml += `</table></div>`;\n\n// Escape quotes and remove newlines for Microsoft Graph API\nhtml = html.trim().replace(/\\\"/g, '\\\\\\\"').replace(/\\n/g, ' ');\n\nreturn [{\n  json: {\n    emailBody: html,\n    reportCount: rows.length\n  }\n}];\n"
+      },
+      "id": "d3db8ddd-6e36-4a2f-bc40-9dcadc3b39a4",
+      "name": "Prepare Report Data",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -160,
+        144
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://graph.microsoft.com/v1.0/me/sendMail",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "oAuth2Api",
+        "sendBody": true,
+        "contentType": "raw",
+        "rawContentType": "application/json",
+        "body": "={\n  \"message\": {\n    \"subject\": \"🚨 On-Hold Invoices Report\",\n    \"body\": {\n      \"contentType\": \"HTML\",\n      \"content\": \"{{ $json.emailBody }}\"\n    },\n    \"toRecipients\": [\n      {\n        \"emailAddress\": {\n          \"address\": \"ndominguez@assureiv.com\"\n        }\n      }\n    ]\n  },\n  \"saveToSentItems\": true\n}\n",
+        "options": {}
+      },
+      "id": "884ff4d7-4b9b-48d1-824b-6688853712ad",
+      "name": "Send Email On-Hold Invoices Report",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        64,
+        144
+      ],
+      "credentials": {
+        "oAuth2Api": {
+          "id": "bA633s3OTbBjnItC",
+          "name": "Microsoft Graph OAuth2"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Schedule Trigger1": {
+      "main": [
+        [
+          {
+            "node": "Lookup VendorBill Memory - 2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Lookup VendorBill Memory - 2": {
+      "main": [
+        [
+          {
+            "node": "IF – Filter On-Hold VendorBills",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF – Filter On-Hold VendorBills": {
+      "main": [
+        [
+          {
+            "node": "Lookup PO in PO Memory",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Prepare Report Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Lookup PO in PO Memory": {
+      "main": [
+        [
+          {
+            "node": "IF – PO Now Pending Bill",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF – PO Now Pending Bill": {
+      "main": [
+        [
+          {
+            "node": "POST to NetSuite - On Hold Prev",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "POST to NetSuite - On Hold Prev": {
+      "main": [
+        [
+          {
+            "node": "Update VendorBill Memory",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Report Data": {
+      "main": [
+        [
+          {
+            "node": "Send Email On-Hold Invoices Report",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "8ec92dd6-ab2a-410c-b42a-3b52d7023bd8",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "57c3611031e2d3197c48b10c51ef2e24bc752c99196ff3eac15828caf8194b3d"
+  },
+  "id": "Ee4JO4fgEraIiBFy",
+  "tags": []
+}

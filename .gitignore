@@ -1,0 +1,14 @@
+# Ignore env files with secrets
+.env
+*.log
+
+# Ignore OS files
+.DS_Store
+
+# Ignore certs
+certbot/*
+!certbot/README.md
+
+# Ignore local volumes
+n8n-data/
+postgres-data/

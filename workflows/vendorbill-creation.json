@@ -1,0 +1,1975 @@
+{
+  "name": "AP Automation - VendorBill Creation MVP_2",
+  "nodes": [
+    {
+      "parameters": {
+        "url": "=https://graph.microsoft.com/v1.0/users/apinvoices@assureiv.com/mailFolders/inbox/messages?$top=10&$orderby=receivedDateTime desc",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "oAuth2Api",
+        "options": {}
+      },
+      "id": "a2b0623a-a964-4d4b-a3e5-9b27178f3bd5",
+      "name": "Fetch Emails (Microsoft Graph)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        272,
+        48
+      ],
+      "credentials": {
+        "oAuth2Api": {
+          "id": "bA633s3OTbBjnItC",
+          "name": "Microsoft Graph OAuth2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "return $json.value.map((email, index) => ({\n  json: {\n    index,\n    subject: email.subject,\n    sender: email.sender?.emailAddress?.address,\n    messageId: email.id,\n    received: email.receivedDateTime,\n    hasAttachments: email.hasAttachments\n  }\n}));\n"
+      },
+      "id": "b2aa34a1-d805-496b-be8f-8c9a266f380e",
+      "name": "Extract Email Metadata",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        480,
+        48
+      ],
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "url": "=https://graph.microsoft.com/v1.0/users/apinvoices@assureiv.com/messages/{{ encodeURIComponent($json.messageId) }}/attachments\n",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "oAuth2Api",
+        "options": {
+          "batching": {
+            "batch": {
+              "batchSize": 3,
+              "batchInterval": 5000
+            }
+          }
+        }
+      },
+      "id": "92300116-98ad-4b85-812d-4667ecdf0349",
+      "name": "Fetch Attachments",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1360,
+        304
+      ],
+      "credentials": {
+        "oAuth2Api": {
+          "id": "bA633s3OTbBjnItC",
+          "name": "Microsoft Graph OAuth2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "toBinary",
+        "sourceProperty": "=data",
+        "options": {
+          "fileName": "={{ $json.filename }}",
+          "mimeType": "\tapplication/pdf"
+        }
+      },
+      "id": "02e48ba7-e380-4514-b28b-3d635ee3c4e4",
+      "name": "Convert to Binary",
+      "type": "n8n-nodes-base.convertToFile",
+      "typeVersion": 1.1,
+      "position": [
+        1952,
+        224
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://storage.googleapis.com/upload/storage/v1/b/assureiv-invoices/o?uploadType=media&name={{ encodeURIComponent($binary.data.fileName) }}\n",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleApi",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/pdf"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "binaryData",
+        "inputDataFieldName": "data",
+        "options": {}
+      },
+      "id": "18dc2ae2-a48b-412a-b762-cac990fec15e",
+      "name": "Upload PDF to GCS",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2128,
+        144
+      ],
+      "credentials": {
+        "oAuth2Api": {
+          "id": "Piky5K0rCgrFj1u0",
+          "name": "Google Vision + GCS"
+        },
+        "googleApi": {
+          "id": "yu0RZ0oDryGnasa4",
+          "name": "Google Service Account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://vision.googleapis.com/v1/files:annotate",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleApi",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "raw",
+        "rawContentType": "JSON (Raw)",
+        "body": "={\n  \"requests\": [\n    {\n      \"inputConfig\": {\n        \"gcsSource\": {\n          \"uri\": \"gs://assureiv-invoices/{{ $json.name }}\"\n        },\n        \"mimeType\": \"application/pdf\"\n      },\n      \"features\": [\n        {\n          \"type\": \"DOCUMENT_TEXT_DETECTION\"\n        }\n      ]\n    }\n  ]\n}\n",
+        "options": {}
+      },
+      "id": "68bd3edd-c0d1-4297-ada3-84acb889c548",
+      "name": "OCR PDF (GCS)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2528,
+        -64
+      ],
+      "credentials": {
+        "oAuth2Api": {
+          "id": "Piky5K0rCgrFj1u0",
+          "name": "Google Vision + GCS"
+        },
+        "googleApi": {
+          "id": "yu0RZ0oDryGnasa4",
+          "name": "Google Service Account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "hours"
+            }
+          ]
+        }
+      },
+      "id": "c656222e-ddf4-4401-a232-6e7ded7ab84a",
+      "name": "Schedule Trigger",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        48
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// 1. Get the Google Sheets lookup results\nconst sheetData = $('Lookup AP Invoices Log Sheet').all() || [];\nconst existingIds = sheetData.map(row => row.json.messageId);\n\n// 2. Keep only real email items from the merge (Input 1)\nconst emailItems = items.filter(item => item.json.subject && item.json.messageId);\n\n// 3. Filter out any emails that already exist in the sheet\nconst newEmails = emailItems.filter(email => !existingIds.includes(email.json.messageId));\n\n// 4. Return the filtered array\nreturn newEmails;\n"
+      },
+      "id": "be4156d7-a072-4f12-9170-6a440ef05658",
+      "name": "Filter New Emails by messageId",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        960,
+        304
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "102MAvZjA4o7aCRpmqVu6LBydl32dcdRAo9-ONLp59Ks",
+          "mode": "list",
+          "cachedResultName": "AP Invoice Tracker",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/102MAvZjA4o7aCRpmqVu6LBydl32dcdRAo9-ONLp59Ks/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "AP Invoice Tracker - Sheet 1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/102MAvZjA4o7aCRpmqVu6LBydl32dcdRAo9-ONLp59Ks/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "messageId": "={{ $json.messageId }}",
+            "timestamp": "={{ new Date().toISOString() }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "messageId",
+              "displayName": "messageId",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "timestamp",
+              "displayName": "timestamp",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "7edc4be7-cd0f-415a-b707-4b9c4dce6b53",
+      "name": "Log Processed Email to Sheet",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.3,
+      "position": [
+        1168,
+        304
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "lyIbvwUMqwDkiSHw",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "return items.flatMap((item) => {\n  const attachments = item.json.value || [];\n  const messageId = item.json.messageId || 'unknownId';\n  const timestamp = new Date().toISOString().replace(/[:.]/g, \"-\"); // GCS-safe\n  const hashId = messageId.slice(0, 8); // Short unique prefix\n\n  return attachments.map((attachment) => {\n    const base64 = attachment?.contentBytes || null;\n    const originalName = attachment?.name || \"\";\n    const cleanOriginal = originalName.replace(/[\\n\\r\\s]+/g, \"\").trim();\n\n    const fallbackName = `Invoice_${timestamp}_${hashId}.pdf`;\n    const finalName = cleanOriginal !== \"\" ? `${timestamp}_${cleanOriginal}` : fallbackName;\n\n    return {\n      json: {\n        filename: finalName,\n        data: base64,\n        messageId\n      }\n    };\n  });\n});\n"
+      },
+      "id": "97926fa6-96bf-4a41-bcbc-5c7aaf86fbdd",
+      "name": "Extract filename + base",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1552,
+        304
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "return items.filter(item => {\n  return item.json?.data && typeof item.json.data === 'string' && item.json.data.length > 1000;\n});\n"
+      },
+      "id": "372182d7-6c79-4d47-9553-3965f3876f52",
+      "name": "Filter Valid Attachment Items",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1760,
+        304
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "return items\n  .filter(item => {\n    const fileName = (item.json.name || '').toLowerCase();\n    return fileName.endsWith('.pdf'); // matches both .pdf and .PDF\n  })\n  .map((item, index) => {\n    item.json._fileId = item.json.name || `file-${Date.now()}-${index}`;\n    return item;\n  });\n"
+      },
+      "id": "f3244244-fccf-41b1-8e5a-b5268c8986af",
+      "name": "Filter PDFs Only",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2320,
+        48
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "return items.map(item => {\n  const text = item.json.responses?.[0]?.responses?.[0]?.fullTextAnnotation?.text || \"\";\n\n  return {\n    json: {\n      // Extract just the text content\n      filteredText: text.split('\\n').slice(0, 150).join('\\n'), // You can increase this if needed\n      filename: item.json.name // Carry filename forward\n    }\n  };\n});\n"
+      },
+      "id": "16bed2aa-21c1-43bf-97ec-061474a7e8b8",
+      "name": "Filter OCR for GPT -",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2704,
+        -144
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "return $input.all().map(item => {\n  const res = item.json.message?.content ?? {};\n  let poNumber = (res.poNumber || \"\").trim().toUpperCase();\n\n  // If it's only digits, prepend \"PO\"\n  if (/^\\d+$/.test(poNumber)) {\n    poNumber = `PO${poNumber}`;\n  }\n\n  // If it's \"PO 123\" with spaces, remove the spaces\n  if (/^PO\\s+\\d+$/.test(poNumber)) {\n    poNumber = poNumber.replace(/\\s+/g, \"\");\n  }\n\n  const cleaned = {\n    vendor: res.vendorName?.trim() || \"UNKNOWN\",\n    poNumber,\n    invoiceNumber: res.invoiceNumber?.trim() || \"\",\n    amountDue: typeof res.amountDue === \"number\" \n      ? res.amountDue \n      : parseFloat(res.amountDue || 0),\n    isInvoice: res.isInvoice === true,\n    filename: $binary.data?.fileName || \"unknown.pdf\"\n  };\n\n  return { json: cleaned, binary: item.binary };\n});\n"
+      },
+      "id": "b33f0d51-ffce-48f2-b0fc-804598a8f3d0",
+      "name": "Clean GPT Output",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3008,
+        -448
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "return $input.all().map(item => {\n  const po = item.json.poNumber || \"\";\n  \n  // ✅ Correct regex: looks for 'PO' followed by optional space and at least 2 digits\n  const isValidPO = /^PO\\s*\\d{2,}/i.test(po.trim()) === true;\n\n  return {\n    json: {\n      ...item.json,\n      isValidPO\n    },\n    binary: item.binary\n  };\n});\n"
+      },
+      "id": "92c9a651-07f2-4730-a3f8-feabd3fdc600",
+      "name": "Validate PO Format",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3184,
+        -560
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "99182cff-b497-480c-a884-c9163e519940",
+              "leftValue": "={{ $json.isValidPO }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "2f9b3179-52e2-4c1d-adfb-3f5520669f93",
+      "name": "IF – Valid PO",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        3184,
+        -16
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "b5561257-d788-4675-a82e-61fbecfe169c",
+              "name": "dummy",
+              "value": "true",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "85c1d040-d040-49e7-999e-4dbbc50e66af",
+      "name": "Set Dummy - No quota errors - IR",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.3,
+      "position": [
+        192,
+        320
+      ],
+      "executeOnce": true,
+      "alwaysOutputData": true,
+      "retryOnFail": true
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "102MAvZjA4o7aCRpmqVu6LBydl32dcdRAo9-ONLp59Ks",
+          "mode": "list",
+          "cachedResultName": "AP Invoice Tracker",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/102MAvZjA4o7aCRpmqVu6LBydl32dcdRAo9-ONLp59Ks/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "AP Invoice Tracker - Sheet 1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/102MAvZjA4o7aCRpmqVu6LBydl32dcdRAo9-ONLp59Ks/edit#gid=0"
+        },
+        "options": {}
+      },
+      "id": "1cfcbdaa-5596-4d82-a5b5-f8c6556b2591",
+      "name": "Lookup AP Invoices Log Sheet",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.3,
+      "position": [
+        480,
+        320
+      ],
+      "alwaysOutputData": true,
+      "retryOnFail": true,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "lyIbvwUMqwDkiSHw",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "id": "9f2f0f1f-4b0f-41e7-8f41-8c947c79abd6",
+      "name": "Merge Results",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 2.1,
+      "position": [
+        784,
+        304
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "return $input.all().map(item => {\n  const po = (item.json.poNumber || '')\n    .trim()\n    .toUpperCase()\n    .replace(/\\s+/g, ''); // Remove all spaces\n\n  return {\n    json: {\n      ...item.json,\n      poNumberNormalized: po\n    }\n  };\n});\n"
+      },
+      "id": "0ed89f5b-df00-44d6-963e-b25b9159a496",
+      "name": "Normalize PO Number",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3408,
+        -48
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "mergeByFields": {
+          "values": [
+            {
+              "field1": "poNumberNormalized",
+              "field2": "Document Number"
+            }
+          ]
+        },
+        "joinMode": "keepEverything",
+        "options": {}
+      },
+      "id": "24aabd13-f0cc-4a86-99b4-db640e4a40d4",
+      "name": "Merge Results for Netsuite Layer",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 2.1,
+      "position": [
+        3664,
+        -16
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "d56e5c77-76a0-49ef-b51f-1f21acb8f1af",
+              "leftValue": "={{ $json[\"Internal ID\"] }}",
+              "rightValue": "",
+              "operator": {
+                "type": "number",
+                "operation": "exists",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "74748957-a7af-4e1d-8655-af24e5f8eb1c",
+      "name": "IF – Internal ID exists",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        3920,
+        352
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "002cdb88-20be-45dd-8489-08f59009dbec",
+              "leftValue": "={{ [\"Pending Bill\", \"Pending Billing/Partially Received\"].includes($json[\"Status\"]) }}\n\n",
+              "rightValue": "true",
+              "operator": {
+                "type": "string",
+                "operation": "contains"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {
+          "ignoreCase": false
+        }
+      },
+      "id": "89e77c80-68ae-4e8c-8fd5-2d5cba4a34b9",
+      "name": "IF – PO Status OK",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        4112,
+        272
+      ],
+      "notes": "In NetSuite’s lifecycle, a PO normally goes:\nPending Receipt → Pending Billing → Fully Billed.\n\nThe \"Pending Bill/Partially Received\" status means at least some of the goods have been received and the PO is ready for billing.\n\n\"Pending Billing\" means all goods are received and it’s ready for billing.\n\nSo if the PO is in either of those statuses, it’s a strong indicator that:\n\nAn Item Receipt exists for it in NetSuite.\n\nNetSuite will accept a Vendor Bill POST for it."
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1Ea6OPRW7l4RiacA6ixwce58jaKusyQ25sC3AbhJfjl0",
+          "mode": "list",
+          "cachedResultName": "AssureIV – NetSuite Truth Tables",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1Ea6OPRW7l4RiacA6ixwce58jaKusyQ25sC3AbhJfjl0/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 998727523,
+          "mode": "list",
+          "cachedResultName": "IR Memory",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1Ea6OPRW7l4RiacA6ixwce58jaKusyQ25sC3AbhJfjl0/edit#gid=998727523"
+        },
+        "filtersUI": {
+          "values": [
+            {
+              "lookupColumn": "Created From ",
+              "lookupValue": "={{ 'Purchase Order #' + $json.poNumberNormalized }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "75d71bbb-47b6-4307-9d46-459e69f949a2",
+      "name": "Lookup IR in IR Memory",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.3,
+      "position": [
+        4512,
+        640
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "lyIbvwUMqwDkiSHw",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1Ea6OPRW7l4RiacA6ixwce58jaKusyQ25sC3AbhJfjl0",
+          "mode": "list",
+          "cachedResultName": "AssureIV – NetSuite Truth Tables",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1Ea6OPRW7l4RiacA6ixwce58jaKusyQ25sC3AbhJfjl0/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "PO Memory",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1Ea6OPRW7l4RiacA6ixwce58jaKusyQ25sC3AbhJfjl0/edit#gid=0"
+        },
+        "filtersUI": {
+          "values": [
+            {
+              "lookupColumn": "Document Number",
+              "lookupValue": "={{ $json.poNumberNormalized }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "d7a2fd49-962e-42ec-92a7-92a8e4a096d3",
+      "name": "Lookup PO Internal ID",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.3,
+      "position": [
+        3568,
+        304
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "lyIbvwUMqwDkiSHw",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "46e9931a-7c9b-4c9f-817f-c4896e87901b",
+              "leftValue": "={{ $json.Status }}",
+              "rightValue": "Pending Bill",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "dfbe5c77-7745-4312-b0ee-2ca394c2462d",
+      "name": "IF – Pending Bill",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        4288,
+        192
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1OpM6d_xpnP3qotvRSk5PzoUCt2AShF2_-crVZQtL2k4",
+          "mode": "list",
+          "cachedResultName": "VendorBill Memory",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1OpM6d_xpnP3qotvRSk5PzoUCt2AShF2_-crVZQtL2k4/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "VendorBill Memory",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1OpM6d_xpnP3qotvRSk5PzoUCt2AShF2_-crVZQtL2k4/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "PO Number": "={{ $json.poNumberNormalized }}",
+            "Invoice Number": "={{ $json.invoiceNumber }}",
+            "Filename": "={{ $json.filename }}",
+            "Internal ID": "={{ $json[\"Internal ID\"] }}",
+            "Date Added": "={{ new Date().toISOString().split('T')[0] }}\n",
+            "Status": "on-hold",
+            "Reason": "Partial receipt"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "PO Number",
+              "displayName": "PO Number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Invoice Number",
+              "displayName": "Invoice Number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Filename",
+              "displayName": "Filename",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Internal ID",
+              "displayName": "Internal ID",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Date Added",
+              "displayName": "Date Added",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Status",
+              "displayName": "Status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Reason",
+              "displayName": "Reason",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "63cda302-c676-409c-b5d3-2bc7e2659e93",
+      "name": "Append to VendorBill Memory",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.3,
+      "position": [
+        5712,
+        224
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "lyIbvwUMqwDkiSHw",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "mergeByFields": {
+          "values": [
+            {
+              "field1": "poNumberNormalized",
+              "field2": "poNumberNormalized"
+            }
+          ]
+        },
+        "joinMode": "keepEverything",
+        "options": {
+          "multipleMatches": "all"
+        }
+      },
+      "id": "e0fb65ee-d6ac-4f85-be12-5e02383ac2ba",
+      "name": "Merge",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 2.1,
+      "position": [
+        4784,
+        224
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "return $input.all().map(item => {\n  const cf = (item.json['Created From '] || '').trim();\n  const poMatch = cf.match(/PO\\d+/);\n  return {\n    json: {\n      ...item.json,\n      poNumberNormalized: poMatch ? poMatch[0] : ''\n    }\n  };\n});\n"
+      },
+      "id": "c49b680e-ebd0-4532-9dfc-fc8f219e111b",
+      "name": "Normalize the IR",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        4720,
+        640
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "b5561257-d788-4675-a82e-61fbecfe169c",
+              "name": "dummy",
+              "value": "true",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "b99e4780-3e48-4a07-9abb-3aa4cb02c257",
+      "name": "Set Dummy - No quota errors",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.3,
+      "position": [
+        5040,
+        400
+      ],
+      "executeOnce": true
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1OpM6d_xpnP3qotvRSk5PzoUCt2AShF2_-crVZQtL2k4",
+          "mode": "list",
+          "cachedResultName": "VendorBill Memory",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1OpM6d_xpnP3qotvRSk5PzoUCt2AShF2_-crVZQtL2k4/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "VendorBill Memory",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1OpM6d_xpnP3qotvRSk5PzoUCt2AShF2_-crVZQtL2k4/edit#gid=0"
+        },
+        "options": {}
+      },
+      "id": "2ccd1443-be68-419c-bb24-21027d953dc5",
+      "name": "Lookup VendorBill Memory",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.3,
+      "position": [
+        5264,
+        400
+      ],
+      "alwaysOutputData": true,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "lyIbvwUMqwDkiSHw",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "function clean(val) {\n  return (val ?? '').toString().trim().toLowerCase();\n}\n\n// Helper to get a field regardless of trailing/leading spaces in header\nfunction get(row, fieldName) {\n  const foundKey = Object.keys(row).find(k => k.trim() === fieldName.trim());\n  return foundKey ? row[foundKey] : '';\n}\n\n// --- Get raw bills from Merge node ---\nconst billListRaw = $('Merge').all().map(i => i.json);\n\n// --- Deduplicate by PO Number + Invoice Number ---\nconst billList = Array.from(\n  new Map(\n    billListRaw.map(bill => [\n      `${clean(get(bill, \"poNumberNormalized\"))}|${clean(get(bill, \"invoiceNumber\"))}`,\n      bill\n    ])\n  ).values()\n);\n\n// --- Get rows already in VendorBill Memory ---\nconst sheetRows = $input.all().map(i => i.json);\n\n// --- Create set of existing keys ---\nconst existingKeys = new Set(\n  sheetRows\n    .map(row => `${clean(get(row, \"PO Number\"))}|${clean(get(row, \"Invoice Number\"))}`)\n    .filter(k => k !== '|') // avoid empty keys\n);\n\n// --- Filter only new bills not in sheet ---\nconst newBills = billList.filter(bill => {\n  const key = `${clean(get(bill, \"poNumberNormalized\"))}|${clean(get(bill, \"invoiceNumber\"))}`;\n  return key !== '|' && !existingKeys.has(key);\n});\n\nreturn newBills.map(bill => ({ json: bill }));\n"
+      },
+      "id": "64891b38-81e2-4b70-8dc4-a81e7ea061a5",
+      "name": "Compare for VENDBILL duplicates",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        5440,
+        224
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://11293253-sb1.suitetalk.api.netsuite.com/services/rest/record/v1/purchaseOrder/{{ $json[\"Internal ID\"] }}/!transform/vendorBill\n",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "oAuth2Api",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Prefer",
+              "value": "return=representation"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "raw",
+        "rawContentType": "application/json",
+        "body": "={\n  \"memo\": \"Auto-created via AP Automation for {{ new Date().toISOString().split('T')[0] }}\"\n}\n",
+        "options": {}
+      },
+      "id": "cfbb85af-5f24-4287-a167-36776b23b8d4",
+      "name": "POST to NetSuite - No holds Req.",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        4432,
+        -176
+      ],
+      "alwaysOutputData": true,
+      "credentials": {
+        "oAuth2Api": {
+          "id": "ev7daFDajZQUwpwi",
+          "name": "NetSuite OAuth2 - API Role (1671)"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1ehQQx0syL0Z2BXBmqLW_NK4RBFFtFgetLc0NWtD-3Pg",
+          "mode": "list",
+          "cachedResultName": "AP Automation - Successful Posts Log",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1ehQQx0syL0Z2BXBmqLW_NK4RBFFtFgetLc0NWtD-3Pg/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "AP Automation - Successful Posts Log",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1ehQQx0syL0Z2BXBmqLW_NK4RBFFtFgetLc0NWtD-3Pg/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Date/Time": "={{ new Date().toISOString() }}",
+            "PO Number": "={{ $json.poNumber }}",
+            "Vendor": "={{ $json.vendor }}",
+            "Invoice Number": "={{ $json.invoiceNumber }}",
+            "Amount": "={{ $json.amountDue }}",
+            "Memo": "={{ $json.Memo }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Date/Time",
+              "displayName": "Date/Time",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Vendor",
+              "displayName": "Vendor",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "PO Number",
+              "displayName": "PO Number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Invoice Number",
+              "displayName": "Invoice Number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Amount",
+              "displayName": "Amount",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Memo",
+              "displayName": "Memo",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Workflow",
+              "displayName": "Workflow",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "52983b25-0b18-4edd-aad7-8c4d515e5a13",
+      "name": "Append to Post Log",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.3,
+      "position": [
+        5152,
+        -544
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "lyIbvwUMqwDkiSHw",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const rows = $input.all().map(item => item.json);\n\n// Build HTML safely\nlet html = `<div style=\"font-family:Arial; line-height:1.5; padding:1em;\">\n<h2 style=\"color:#1a73e8;\">✅ Successful NetSuite Posts Report</h2>\n<p><strong>Total:</strong> ${rows.length}</p>\n<table border=\"1\" cellpadding=\"5\" cellspacing=\"0\" style=\"border-collapse:collapse; width:100%;\">\n<tr style=\"background-color:#f2f2f2;\">\n<th>PO Number</th>\n<th>Invoice Number</th>\n<th>Vendor</th>\n<th>Date Posted</th>\n</tr>`;\n\nrows.forEach(row => {\n  html += `<tr>\n<td>${row[\"PO Number\"] || \"N/A\"}</td>\n<td>${row[\"Invoice Number\"] || \"N/A\"}</td>\n<td>${row[\"Vendor\"] || \"N/A\"}</td>\n<td>${row[\"Date/Time\"] || \"N/A\"}</td>\n</tr>`;\n});\n\nhtml += `</table></div>`;\n\n// Escape for safe JSON\nconst safeHtml = html\n  .replace(/\\\"/g, '\\\\\"') // escape quotes\n  .replace(/\\n/g, '');   // remove line breaks\n\nreturn [\n  {\n    json: {\n      emailBody: safeHtml\n    }\n  }\n];\n"
+      },
+      "id": "ec3d7938-1a73-4332-bbc4-4f88046657bd",
+      "name": "Prepare Report Data – Successful Posts",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        5392,
+        -544
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://graph.microsoft.com/v1.0/me/sendMail",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "oAuth2Api",
+        "sendBody": true,
+        "contentType": "raw",
+        "rawContentType": "application/json",
+        "body": "={\n  \"message\": {\n    \"subject\": \"✅ Successful NetSuite Posts Report\",\n    \"body\": {\n      \"contentType\": \"HTML\",\n      \"content\": \"{{ $json.emailBody }}\"\n    },\n    \"toRecipients\": [\n      {\n        \"emailAddress\": {\n          \"address\": \"ndominguez@assureiv.com\"\n        }\n      }\n    ]\n  },\n  \"saveToSentItems\": true\n}\n",
+        "options": {}
+      },
+      "id": "aac3a939-cae3-44c3-80ea-9046f67b4673",
+      "name": "Send Email – Successful Posts Report",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        5648,
+        -544
+      ],
+      "credentials": {
+        "oAuth2Api": {
+          "id": "bA633s3OTbBjnItC",
+          "name": "Microsoft Graph OAuth2"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "id": "2c0b3a7f-fb0c-4c24-b9d1-2718bb48a27a",
+      "name": "Merge - Values to Send",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 2.1,
+      "position": [
+        4688,
+        -160
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "return $input.all().filter(item => {\n  const obj = item.json || {};\n\n  // Remove if object has no keys\n  if (Object.keys(obj).length === 0) return false;\n\n  // Keep only if at least one value is meaningful (not null/undefined/empty/whitespace)\n  return Object.values(obj).some(v => {\n    if (v === null || v === undefined) return false;\n    if (typeof v === 'string' && v.trim() === '') return false;\n    return true;\n  });\n});\n"
+      },
+      "id": "436090b3-4e66-4790-9a81-3bd9e59d3ae6",
+      "name": "Filter out empty objects",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        4928,
+        -544
+      ]
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "gpt-4.1",
+          "mode": "list",
+          "cachedResultName": "GPT-4.1"
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "=You are a reliable invoice parser. From the following raw OCR invoice text, extract:\n\n- vendorName\n- invoiceNumber\n- poNumber\n- amountDue\n- isInvoice (true/false)\n\nRespond strictly in this format:\n\n{\n  \"vendorName\": \"string\",\n  \"invoiceNumber\": \"string\",\n  \"poNumber\": \"string\",\n  \"amountDue\": 1234.56,\n  \"isInvoice\": true\n}\n",
+              "role": "system"
+            },
+            {
+              "content": "={{ $json.filteredText }}\n"
+            }
+          ]
+        },
+        "jsonOutput": true,
+        "options": {
+          "maxTokens": 2000,
+          "temperature": 0.2
+        }
+      },
+      "id": "70123332-6512-451c-9daa-769dce81ddeb",
+      "name": "GPT - Extract Invoice Details",
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 1.3,
+      "position": [
+        2800,
+        128
+      ],
+      "retryOnFail": true,
+      "waitBetweenTries": 5000,
+      "credentials": {
+        "openAiApi": {
+          "id": "JJ3fMiY8C72RBwBS",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "combinationMode": "mergeByPosition",
+        "options": {}
+      },
+      "id": "1fb55174-9ebe-410b-8fcf-2864fca8ebbb",
+      "name": "Merge Filter PDFs & GPT Output",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 2.1,
+      "position": [
+        2880,
+        592
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "mergeByFields": {
+          "values": [
+            {
+              "field1": "invoiceNumber",
+              "field2": "message.content.invoiceNumber"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "858f0525-2dc5-413c-a028-3a254ce1a2b3",
+      "name": "Match Not Valid POs with Metadata",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 2.1,
+      "position": [
+        3280,
+        720
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://storage.googleapis.com/upload/storage/v1/b/ap-automation-invalid-pos/o?uploadType=media&name={{ encodeURIComponent($binary.data.fileName) }}\n",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleApi",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/pdf"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "binaryData",
+        "inputDataFieldName": "data",
+        "options": {}
+      },
+      "id": "2aa71b63-aff0-4c71-ac19-f9a3bef7b978",
+      "name": "AP-automation-invalid-pos GCS",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        3712,
+        720
+      ],
+      "credentials": {
+        "oAuth2Api": {
+          "id": "Piky5K0rCgrFj1u0",
+          "name": "Google Vision + GCS"
+        },
+        "googleApi": {
+          "id": "yu0RZ0oDryGnasa4",
+          "name": "Google Service Account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "={{ $json.mediaLink }}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleApi",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "file"
+            }
+          }
+        }
+      },
+      "id": "79129ea2-0fe2-4801-895c-c6e9434e02f7",
+      "name": "Get Binary from Not Valid POs",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        3504,
+        720
+      ],
+      "credentials": {
+        "oAuth2Api": {
+          "id": "Piky5K0rCgrFj1u0",
+          "name": "Google Vision + GCS"
+        },
+        "googleApi": {
+          "id": "yu0RZ0oDryGnasa4",
+          "name": "Google Service Account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "b5561257-d788-4675-a82e-61fbecfe169c",
+              "name": "dummy",
+              "value": "true",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "35d437c1-7c8d-4bdb-a2bf-ae087baaaacd",
+      "name": "Set Dummy - No quota errors - Not Valid POs Memory",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.3,
+      "position": [
+        3088,
+        1264
+      ],
+      "executeOnce": true
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1Ea6OPRW7l4RiacA6ixwce58jaKusyQ25sC3AbhJfjl0",
+          "mode": "list",
+          "cachedResultName": "AssureIV – NetSuite Truth Tables",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1Ea6OPRW7l4RiacA6ixwce58jaKusyQ25sC3AbhJfjl0/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 1391321720,
+          "mode": "list",
+          "cachedResultName": "Invalid PO Memory",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1Ea6OPRW7l4RiacA6ixwce58jaKusyQ25sC3AbhJfjl0/edit#gid=1391321720"
+        },
+        "options": {}
+      },
+      "id": "3cf2e36b-8f36-4543-9285-10cf00bf3a7f",
+      "name": "LookupNotValidPOs",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.3,
+      "position": [
+        3328,
+        1264
+      ],
+      "alwaysOutputData": true,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "lyIbvwUMqwDkiSHw",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "function clean(val) {\n  return (val ?? '').toString().trim().toLowerCase();\n}\n\n// Helper to get a field regardless of trailing/leading spaces in header\nfunction get(row, fieldName) {\n  const foundKey = Object.keys(row).find(k => k.trim() === fieldName.trim());\n  return foundKey ? row[foundKey] : '';\n}\n\n// Get today's invalid POs directly from the named upstream node\nconst poList = $('Match Not Valid POs with Metadata').all().map(i => i.json);\n\n// Get historical memory from Google Sheets (wired into this node)\nconst sheetRows = $input.all().map(i => i.json);\n\n// Build a set of existing keys from memory\nconst existingKeys = new Set(\n  sheetRows.map(row =>\n    `${clean(get(row, \"Vendor\"))}|${clean(get(row, \"InvoiceNumber\"))}`\n  )\n);\n\n// Filter out duplicates\nconst newPOs = poList.filter(po => {\n  const key = `${clean(po.vendor)}|${clean(po.invoiceNumber)}`;\n  return !existingKeys.has(key);\n});\n\n// Output only the new items\nreturn newPOs.map(po => ({ json: po }));\n"
+      },
+      "id": "14bfdcd2-f82c-4bb5-9060-80549934f24b",
+      "name": "CompareNotValidPOs vs Memory",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3632,
+        1264
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Normalize Compare output for Google Sheets append\nreturn $input.all().map(item => {\n  const bucket = item.json.bucket;\n  const objectName = encodeURIComponent(item.json.name);\n  \n  return {\n    json: {\n      DateReported: new Date().toISOString().slice(0, 10),\n      Vendor: item.json.vendor,\n      InvoiceNumber: item.json.invoiceNumber,\n      // Use Authenticated URL so links work with Google login + IAM Viewer role\n      GCSLink: `https://storage.cloud.google.com/${bucket}/${objectName}`,\n      AdditionalMetadata: item.json._fileId\n    }\n  };\n});\n"
+      },
+      "id": "5ec79ee0-bcec-45cf-ac80-a9257a584a36",
+      "name": "NormalizeInvalidPOs",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3840,
+        1264
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1Ea6OPRW7l4RiacA6ixwce58jaKusyQ25sC3AbhJfjl0",
+          "mode": "list",
+          "cachedResultName": "AssureIV – NetSuite Truth Tables",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1Ea6OPRW7l4RiacA6ixwce58jaKusyQ25sC3AbhJfjl0/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 1391321720,
+          "mode": "list",
+          "cachedResultName": "Invalid PO Memory",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1Ea6OPRW7l4RiacA6ixwce58jaKusyQ25sC3AbhJfjl0/edit#gid=1391321720"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "DateReported": "={{ $json.DateReported }}",
+            "Vendor": "={{ $json.Vendor }}",
+            "InvoiceNumber": "={{ $json.InvoiceNumber }}",
+            "GCSLink": "={{ $json.GCSLink }}",
+            "AdditionalMetadata": "={{ $json.AdditionalMetadata }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "DateReported",
+              "displayName": "DateReported",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Vendor",
+              "displayName": "Vendor",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "InvoiceNumber",
+              "displayName": "InvoiceNumber",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "GCSLink",
+              "displayName": "GCSLink",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "AdditionalMetadata",
+              "displayName": "AdditionalMetadata",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "2f7670ac-89e3-4917-8fa0-addcf9856c62",
+      "name": "Append NormalizeInvalidPOs",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.3,
+      "position": [
+        4064,
+        1264
+      ],
+      "alwaysOutputData": true,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "lyIbvwUMqwDkiSHw",
+          "name": "Google Sheets account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Fetch Emails (Microsoft Graph)": {
+      "main": [
+        [
+          {
+            "node": "Extract Email Metadata",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Attachments": {
+      "main": [
+        [
+          {
+            "node": "Extract filename + base",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Upload PDF to GCS": {
+      "main": [
+        [
+          {
+            "node": "Filter PDFs Only",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Fetch Emails (Microsoft Graph)",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Set Dummy - No quota errors - IR",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract filename + base": {
+      "main": [
+        [
+          {
+            "node": "Filter Valid Attachment Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Log Processed Email to Sheet": {
+      "main": [
+        [
+          {
+            "node": "Fetch Attachments",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filter Valid Attachment Items": {
+      "main": [
+        [
+          {
+            "node": "Convert to Binary",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Convert to Binary": {
+      "main": [
+        [
+          {
+            "node": "Upload PDF to GCS",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filter PDFs Only": {
+      "main": [
+        [
+          {
+            "node": "OCR PDF (GCS)",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Merge Filter PDFs & GPT Output",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "OCR PDF (GCS)": {
+      "main": [
+        [
+          {
+            "node": "Filter OCR for GPT -",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filter OCR for GPT -": {
+      "main": [
+        [
+          {
+            "node": "GPT - Extract Invoice Details",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Clean GPT Output": {
+      "main": [
+        [
+          {
+            "node": "Validate PO Format",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set Dummy - No quota errors - IR": {
+      "main": [
+        [
+          {
+            "node": "Lookup AP Invoices Log Sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract Email Metadata": {
+      "main": [
+        [
+          {
+            "node": "Merge Results",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filter New Emails by messageId": {
+      "main": [
+        [
+          {
+            "node": "Log Processed Email to Sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Lookup AP Invoices Log Sheet": {
+      "main": [
+        [
+          {
+            "node": "Merge Results",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Merge Results": {
+      "main": [
+        [
+          {
+            "node": "Filter New Emails by messageId",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validate PO Format": {
+      "main": [
+        [
+          {
+            "node": "IF – Valid PO",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF – Internal ID exists": {
+      "main": [
+        [
+          {
+            "node": "IF – PO Status OK",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF – PO Status OK": {
+      "main": [
+        [
+          {
+            "node": "IF – Pending Bill",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Normalize PO Number": {
+      "main": [
+        [
+          {
+            "node": "Merge Results for Netsuite Layer",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Lookup PO Internal ID",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Lookup PO Internal ID": {
+      "main": [
+        [
+          {
+            "node": "Merge Results for Netsuite Layer",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "IF – Pending Bill": {
+      "main": [
+        [
+          {
+            "node": "POST to NetSuite - No holds Req.",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Merge - Values to Send",
+            "type": "main",
+            "index": 1
+          }
+        ],
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Lookup IR in IR Memory",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Lookup IR in IR Memory": {
+      "main": [
+        [
+          {
+            "node": "Normalize the IR",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Normalize the IR": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Merge": {
+      "main": [
+        [
+          {
+            "node": "Set Dummy - No quota errors",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Compare for VENDBILL duplicates",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set Dummy - No quota errors": {
+      "main": [
+        [
+          {
+            "node": "Lookup VendorBill Memory",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Lookup VendorBill Memory": {
+      "main": [
+        [
+          {
+            "node": "Compare for VENDBILL duplicates",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Compare for VENDBILL duplicates": {
+      "main": [
+        [
+          {
+            "node": "Append to VendorBill Memory",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge Results for Netsuite Layer": {
+      "main": [
+        [
+          {
+            "node": "IF – Internal ID exists",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Append to Post Log": {
+      "main": [
+        [
+          {
+            "node": "Prepare Report Data – Successful Posts",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Report Data – Successful Posts": {
+      "main": [
+        [
+          {
+            "node": "Send Email – Successful Posts Report",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "POST to NetSuite - No holds Req.": {
+      "main": [
+        [
+          {
+            "node": "Merge - Values to Send",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge - Values to Send": {
+      "main": [
+        [
+          {
+            "node": "Filter out empty objects",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filter out empty objects": {
+      "main": [
+        [
+          {
+            "node": "Append to Post Log",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GPT - Extract Invoice Details": {
+      "main": [
+        [
+          {
+            "node": "Clean GPT Output",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Merge Filter PDFs & GPT Output",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF – Valid PO": {
+      "main": [
+        [
+          {
+            "node": "Normalize PO Number",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Match Not Valid POs with Metadata",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge Filter PDFs & GPT Output": {
+      "main": [
+        [
+          {
+            "node": "Match Not Valid POs with Metadata",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Match Not Valid POs with Metadata": {
+      "main": [
+        [
+          {
+            "node": "Get Binary from Not Valid POs",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Set Dummy - No quota errors - Not Valid POs Memory",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Binary from Not Valid POs": {
+      "main": [
+        [
+          {
+            "node": "AP-automation-invalid-pos GCS",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set Dummy - No quota errors - Not Valid POs Memory": {
+      "main": [
+        [
+          {
+            "node": "LookupNotValidPOs",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "LookupNotValidPOs": {
+      "main": [
+        [
+          {
+            "node": "CompareNotValidPOs vs Memory",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "CompareNotValidPOs vs Memory": {
+      "main": [
+        [
+          {
+            "node": "NormalizeInvalidPOs",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "NormalizeInvalidPOs": {
+      "main": [
+        [
+          {
+            "node": "Append NormalizeInvalidPOs",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "bbcad93f-eb25-4087-874f-aff752d4f4e4",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "57c3611031e2d3197c48b10c51ef2e24bc752c99196ff3eac15828caf8194b3d"
+  },
+  "id": "AxeB0AyYkE09FlGG",
+  "tags": []
+}

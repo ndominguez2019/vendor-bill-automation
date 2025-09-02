@@ -1,0 +1,214 @@
+{
+  "name": "Invalid PO Scheduled Report",
+  "nodes": [
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://graph.microsoft.com/v1.0/me/sendMail",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "oAuth2Api",
+        "sendBody": true,
+        "contentType": "raw",
+        "rawContentType": "application/json",
+        "body": "={\n  \"message\": {\n    \"subject\": \"📢 Invalid/No PO Matches Report\",\n    \"body\": {\n      \"contentType\": \"HTML\",\n      \"content\": \"{{ $json.emailBody }}\"\n    },\n    \"toRecipients\": [\n      {\n        \"emailAddress\": {\n          \"address\": \"ndominguez@assureiv.com\"\n        }\n      }\n    ]\n  },\n  \"saveToSentItems\": true\n}\n",
+        "options": {}
+      },
+      "id": "c058fb10-cd26-49ef-aba7-06f2276038b4",
+      "name": "Send Email – Invalid/No PO Matches Report",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1248,
+        208
+      ],
+      "credentials": {
+        "oAuth2Api": {
+          "id": "bA633s3OTbBjnItC",
+          "name": "Microsoft Graph OAuth2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "triggerAtHour": 16
+            }
+          ]
+        }
+      },
+      "id": "b3516dcd-acca-472f-a666-eff283a292a7",
+      "name": "Schedule Trigger",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        208,
+        384
+      ]
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1Ea6OPRW7l4RiacA6ixwce58jaKusyQ25sC3AbhJfjl0",
+          "mode": "list",
+          "cachedResultName": "AssureIV – NetSuite Truth Tables",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1Ea6OPRW7l4RiacA6ixwce58jaKusyQ25sC3AbhJfjl0/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 1391321720,
+          "mode": "list",
+          "cachedResultName": "Invalid PO Memory",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1Ea6OPRW7l4RiacA6ixwce58jaKusyQ25sC3AbhJfjl0/edit#gid=1391321720"
+        },
+        "options": {}
+      },
+      "id": "6fbb1809-7bc7-49d4-8965-482528eb2999",
+      "name": "Read rows from Invalid PO Memory",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.3,
+      "position": [
+        400,
+        384
+      ],
+      "alwaysOutputData": true,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "lyIbvwUMqwDkiSHw",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const today = new Date().toISOString().slice(0,10);\nreturn $input.all().filter(item => item.json.DateReported === today);\n"
+      },
+      "id": "abc7346f-5ed6-480a-9e3f-cd0ed1f18b1c",
+      "name": "Filter Today’s Rows",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        624,
+        384
+      ],
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "a5c0421c-5462-41be-a2c3-060d7c931072",
+              "leftValue": "={{ $json.DateReported }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "exists",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "8b4f9c86-ecaf-447c-9585-2ed77788ba5d",
+      "name": "Any Items?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        848,
+        384
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const rows = $input.all().map(item => item.json);\n\n// Build HTML safely\nlet html = `<div style=\"font-family:Arial; line-height:1.5; padding:1em;\">\n<h2 style=\"color:#d93025;\">📢 Invalid / No PO Matches Report</h2>\n<p><strong>Total:</strong> ${rows.length}</p>\n<table border=\"1\" cellpadding=\"5\" cellspacing=\"0\" style=\"border-collapse:collapse; width:100%;\">\n<tr style=\"background-color:#f2f2f2;\">\n<th>PO Number</th>\n<th>Invoice Number</th>\n<th>Vendor</th>\n<th>GCS Link</th>\n<th>Date Uploaded</th>\n</tr>`;\n\nrows.forEach(row => {\n  html += `<tr>\n<td>N/A</td>\n<td>${row.InvoiceNumber || \"N/A\"}</td>\n<td>${row.Vendor || \"N/A\"}</td>\n<td><a href=\"${row.GCSLink}\">View File</a></td>\n<td>${row.DateReported || \"N/A\"}</td>\n</tr>`;\n});\n\nhtml += `</table></div>`;\n\n// Escape for safe JSON (important for Graph API)\nconst safeHtml = html\n  .replace(/\\\"/g, '\\\\\"') // escape double quotes\n  .replace(/\\n/g, '');   // strip line breaks\n\nreturn [\n  {\n    json: {\n      emailBody: safeHtml\n    }\n  }\n];\n"
+      },
+      "id": "6ff22210-7eb6-47be-817d-4ebd1e73f34b",
+      "name": "Build Email Body",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1072,
+        208
+      ]
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Read rows from Invalid PO Memory",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read rows from Invalid PO Memory": {
+      "main": [
+        [
+          {
+            "node": "Filter Today’s Rows",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filter Today’s Rows": {
+      "main": [
+        [
+          {
+            "node": "Any Items?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Any Items?": {
+      "main": [
+        [
+          {
+            "node": "Build Email Body",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Email Body": {
+      "main": [
+        [
+          {
+            "node": "Send Email – Invalid/No PO Matches Report",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "c1a004c5-0bd9-48f5-80c9-1f017e348cdf",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "57c3611031e2d3197c48b10c51ef2e24bc752c99196ff3eac15828caf8194b3d"
+  },
+  "id": "gFjReKQdHGiQspLW",
+  "tags": []
+}
