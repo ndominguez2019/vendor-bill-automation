@@ -1,0 +1,114 @@
+Suggested TROUBLESHOOTING_GUIDE.txt
+# AssureIV – n8n Troubleshooting Guide
+
+## Issue: Website unreachable after VM restart
+
+### Root Cause
+- Google Cloud assigns **ephemeral external IPs** by default.
+- When the VM is stopped and restarted, it may get a **new IP address**.
+- DNS records still pointed to the **old IP**.
+- nginx reverse proxy was forwarding to the old IP instead of localhost.
+
+---
+
+## Steps to Resolve
+
+### 1. Update DNS in Google Cloud
+- Log into Google Cloud Console.
+- Go to **Network Services → Cloud DNS → assureiv-zone**.
+- Update **A records**:
+  - `assureiv-workflows.com` → new VM IP
+  - `www.assureiv-workflows.com` → new VM IP
+- TTL is set to 300s (5 minutes), so changes propagate quickly.
+- Verify with:
+  ```bash
+  dig assureiv-workflows.com @8.8.8.8
+
+2. Update nginx proxy settings
+
+SSH into the VM.
+
+Open nginx config:
+
+sudo nano /etc/nginx/sites-enabled/assureiv-workflows.com
+
+
+Change proxy_pass from old IP:
+
+proxy_pass http://34.74.xxx.xxx:5678;
+
+
+to:
+
+proxy_pass http://127.0.0.1:5678;
+
+
+Test & reload nginx:
+
+sudo nginx -t
+sudo systemctl reload nginx
+
+3. (Optional) Prevent issue in the future
+
+Reserve a static IP in Google Cloud:
+
+Go to VPC Network → External IP addresses.
+
+Change current VM IP from Ephemeral → Static.
+
+This ensures the IP never changes on restart.
+
+Commands Quick Reference
+
+Check DNS resolution:
+
+dig assureiv-workflows.com @8.8.8.8
+
+
+Check nginx config:
+
+sudo nginx -t
+
+
+Reload nginx:
+
+sudo systemctl reload nginx
+
+
+Check nginx service status:
+
+sudo systemctl status nginx
+
+
+Check running containers:
+
+docker ps
+
+Notes
+
+SSL certs are managed by Certbot.
+
+Configs reference:
+
+/etc/nginx/sites-enabled/assureiv-workflows.com
+
+/etc/letsencrypt/live/assureiv-workflows.com/
+
+If HTTPS errors occur, check Certbot renewals:
+
+sudo systemctl list-timers | grep certbot
+
+
+---
+
+### ✅ Save & Push to GitHub
+On your VM:
+
+```bash
+cd ~/vendor-bill-automation   # go to your repo root
+nano TROUBLESHOOTING_GUIDE.txt
+# paste the guide, save & exit
+
+git add TROUBLESHOOTING_GUIDE.txt
+git commit -m "Add troubleshooting guide for DNS + nginx issues"
+git push origin main
