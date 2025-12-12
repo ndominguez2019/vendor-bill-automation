@@ -1,148 +1,136 @@
-# 🧾 Vendor Bill Automation System
+🧾 Vendor Bill Automation System (GPT + OCR + NetSuite)
 
-This is a production-grade automation system for processing vendor invoices, parsing data using GPT and OCR, and posting structured vendor bills into Oracle NetSuite — all orchestrated through n8n workflows, Dockerized on a GCP VM.
+An end-to-end, cloud-native automation pipeline that processes vendor invoices using AI and posts them to Oracle NetSuite — fully orchestrated via n8n, deployed in Docker on Google Cloud.
 
----
+📌 This system parses emails, reads invoices via OCR, uses GPT to extract structured data, validates vendor POs, and posts vendor bills — autonomously.
 
-## 🚀 Overview
+🚀 What This Solves
 
-This project enables:
-- Fetching invoices from Microsoft 365 inbox
-- Parsing PDFs using Google Vision OCR + OpenAI GPT
-- Validating & posting Vendor Bills to NetSuite
-- Scheduled monitoring of on-hold invoices
-- Logging and tracking via Google Sheets
-- Daily reports for invalid POs and automation QA
+Manually processing vendor invoices is:
 
----
+🕐 Time-consuming
 
-## 🛠️ Tech Stack
+😵‍💫 Prone to error
 
-- **n8n** – workflow automation engine
-- **Docker Compose** – container orchestration
-- **PostgreSQL** – data store for n8n
-- **Nginx + Certbot** – reverse proxy + SSL
-- **Google Cloud Platform (GCS, Vision, Sheets)**
-- **Microsoft Graph API** – email + messaging
-- **Oracle NetSuite REST API** – bill posting
-- **OpenAI GPT** – invoice data extraction
+🧾 Inconsistent across vendors
 
----
+This system:
 
-## 📁 Folder Structure
+Monitors an inbox for incoming invoices
 
-```
+Uses Google OCR + GPT to extract structured data
+
+Posts valid bills directly into Oracle NetSuite
+
+Flags errors, invalid POs, and sends daily email reports
+
+Logs everything to Google Sheets for transparency
+
+🧠 Architecture
+Layer	Tech
+Workflow Engine	n8n (Dockerized)
+PDF OCR	Google Cloud Vision
+Data Extraction	OpenAI GPT
+ERP Integration	Oracle NetSuite REST API
+Inbox Monitor	Microsoft Graph API (Outlook)
+Reporting / Logs	Google Sheets API
+Infra	GCP VM, Docker, Nginx, Certbot
+🗂️ Folder Overview
 vendor-bill-automation/
-├── docker/                 # Docker & reverse proxy config
-│   └── nginx/
-│       └── n8n.conf
-├── workflows/              # n8n workflow JSON exports
-├── config/                 # Environment variables
-│   └── .env.example
-├── certbot/                # SSL info (no live certs here)
-├── docs/                   # Project setup & architecture docs
-├── scripts/                # (Optional) automation scripts
-└── .gitignore
-```
+├── workflows/              # n8n JSON exports
+├── docker/                 # Docker + Nginx configs
+├── config/                 # .env examples, secrets (excluded)
+├── certbot/                # SSL (auto-renewal setup)
+├── docs/                   # Architecture & setup guides
+└── scripts/                # Optional CLI tools (for setup)
 
----
+🛠️ How to Deploy It
+1. Provision GCP VM
 
-## ⚙️ Setup Instructions
+OS: Ubuntu 20.04+
 
-### 1. VM Setup (Google Cloud)
-Provision a VM with:
-- Ubuntu 20.04+ (recommended)
-- Docker + Docker Compose
-- Firewall allowing ports 80, 443, 5678
+Open ports: 80, 443, 5678
 
-Install:
-```bash
+Install Docker stack:
+
 sudo apt update && sudo apt install docker.io docker-compose -y
-```
 
-### 2. Clone the Repo
-```bash
-git clone https://github.com/your-org/vendor-bill-automation.git
+2. Clone & Configure
+git clone https://github.com/your-username/vendor-bill-automation.git
 cd vendor-bill-automation
-cp config/.env.example .env  # then edit with real secrets
-```
+cp config/.env.example .env  # Edit with your real values
 
-### 3. Run Docker
-```bash
+3. Start It Up
 docker-compose -f docker/docker-compose.yml up -d
-```
 
-### 4. Access n8n
-Go to: `https://yourdomain.com`
-- Login: `admin / your_password`
-- Import workflows from `/workflows`
+4. Access n8n
 
----
+Visit: https://yourdomain.com
+Login: admin / your_password
+Then import workflows from the /workflows folder.
 
-## 🔁 Workflow Documentation
+🔁 Included Workflows
+Workflow Name	Purpose
+vendorbill-creation.json	Main automation: inbox → GPT → NetSuite
+vendorbill-release.json	Auto-releases invoices placed on hold
+truth-sheet-builder.json	Parses NetSuite reports into Sheets
+invalid-po-report.json	Daily email report for unmatched POs
+⚙️ Environment Setup
 
-| Workflow Name | Description |
-|---------------|-------------|
-| `vendorbill-creation.json` | Main automation – fetches invoices, extracts data, posts to NetSuite |
-| `vendorbill-release.json` | Monitors "on-hold" invoices and posts when ready |
-| `truth-sheet-builder.json` | Ingests NetSuite report emails and syncs Google Sheets |
-| `invalid-po-report.json` | Daily report for invoices with no valid PO match |
+Defined in .env.example, covering:
 
----
+Postgres DB settings
 
-## 🔐 Environment Variables
+n8n credentials
 
-Defined in `.env.example`, these cover:
-- Database credentials
-- n8n auth settings
-- Timezone
-- OAuth credential references
+Microsoft Graph / GCP / OpenAI / NetSuite API keys
 
-> ⚠️ **Never commit your real `.env` to GitHub**
+⚠️ Do not commit your real .env file
 
----
+📬 Integration Notes
 
-## 📬 Email + API Integrations
+Microsoft 365: App registration + OAuth2 for inbox
 
-- Ensure your Microsoft 365 tenant grants OAuth access to the inbox used.
-- Setup GCP service accounts with:
-  - Sheets API
-  - Vision OCR
-  - GCS bucket permissions
+Google Cloud: Enable Sheets, Vision, GCS, create service account
 
----
+NetSuite: Token-based auth or OAuth setup required
 
-## ☁️ Disaster Recovery
+GPT: Uses OpenAI API with a system prompt for invoice parsing
 
-1. Rebuild your VM
-2. Install Docker + Docker Compose
-3. Pull this repo from GitHub
-4. Restore `.env` and any n8n backups (from `/n8n-data` volume)
-5. Re-import workflows
-6. You're live again.
+🔐 Security & Recovery
 
----
+Your setup can be restored in 5 steps:
 
-## 💾 GitHub Push Instructions
+Spin up a new VM
 
-```bash
-cd /path/to/vendor-bill-automation
+Reinstall Docker + pull this repo
+
+Recreate .env and mount /n8n-data if you saved backups
+
+Run Docker
+
+Re-import workflows
+
+You’re live again.
+
+📦 Example Git Commands (initial push)
+cd vendor-bill-automation
 git init
 git remote add origin https://github.com/YOUR-USERNAME/vendor-bill-automation.git
 git add .
-git commit -m "Initial commit: vendor bill automation system"
-git push -u origin master  # or main
-```
+git commit -m "Initial commit: vendor invoice automation POC"
+git push -u origin main
 
-Then mark the repo as **private** unless you're ready to share it publicly.
+🙋‍♂️ Author
 
----
+Built by: Nicolas D.
+GitHub: @ndominguez2019
 
-## 👋 Contact
+Available for feedback, freelance, or full-time roles.
 
-Built by: `ndominguez@assureiv.com`  
-Maintainer: You 🙂
+💬 Final Notes
 
----
+This is an open-source proof-of-concept to show how far automation can go when you blend cloud infra + AI + ERP APIs.
+It’s modular, extensible, and designed to be cloned, forked, and improved.
 
-## ✅ You're Backed Up. You're Safe. You're Future-Proof.
+🌟 If you’d use this in production or want to collaborate — let’s talk.
