@@ -1,5 +1,5 @@
 Suggested TROUBLESHOOTING_GUIDE.txt
-# AssureIV – n8n Troubleshooting Guide
+# Netsuite and OpenAI ERP automation – n8n Troubleshooting Guide
 
 ## Issue: Website unreachable after VM restart
 
@@ -15,14 +15,14 @@ Suggested TROUBLESHOOTING_GUIDE.txt
 
 ### 1. Update DNS in Google Cloud
 - Log into Google Cloud Console.
-- Go to **Network Services → Cloud DNS → assureiv-zone**.
+- Go to **Network Services → Cloud DNS → example-zone**.
 - Update **A records**:
-  - `assureiv-workflows.com` → new VM IP
-  - `www.assureiv-workflows.com` → new VM IP
+  - `example-workflows.com` → new VM IP
+  - `www.example-workflows.com` → new VM IP
 - TTL is set to 300s (5 minutes), so changes propagate quickly.
 - Verify with:
   ```bash
-  dig assureiv-workflows.com @8.8.8.8
+  dig example-workflows.com @8.8.8.8
 
 2. Update nginx proxy settings
 
@@ -30,7 +30,7 @@ SSH into the VM.
 
 Open nginx config:
 
-sudo nano /etc/nginx/sites-enabled/assureiv-workflows.com
+sudo nano /etc/nginx/sites-enabled/example-workflows.com
 
 
 Change proxy_pass from old IP:
@@ -62,7 +62,7 @@ Commands Quick Reference
 
 Check DNS resolution:
 
-dig assureiv-workflows.com @8.8.8.8
+dig example-workflows.com @8.8.8.8
 
 
 Check nginx config:
@@ -90,9 +90,9 @@ SSL certs are managed by Certbot.
 
 Configs reference:
 
-/etc/nginx/sites-enabled/assureiv-workflows.com
+/etc/nginx/sites-enabled/example-workflows.com
 
-/etc/letsencrypt/live/assureiv-workflows.com/
+/etc/letsencrypt/live/example-workflows.com/
 
 If HTTPS errors occur, check Certbot renewals:
 
