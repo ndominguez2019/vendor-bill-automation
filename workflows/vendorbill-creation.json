@@ -1050,7 +1050,7 @@
         "sendBody": true,
         "contentType": "raw",
         "rawContentType": "application/json",
-        "body": "={\n  \"message\": {\n    \"subject\": \"✅ Successful NetSuite Posts Report\",\n    \"body\": {\n      \"contentType\": \"HTML\",\n      \"content\": \"{{ $json.emailBody }}\"\n    },\n    \"toRecipients\": [\n      {\n        \"emailAddress\": {\n          \"address\": \"ndominguez@assureiv.com\"\n        }\n      }\n    ]\n  },\n  \"saveToSentItems\": true\n}\n",
+        "body": "={\n  \"message\": {\n    \"subject\": \"✅ Successful NetSuite Posts Report\",\n    \"body\": {\n      \"contentType\": \"HTML\",\n      \"content\": \"{{ $json.emailBody }}\"\n    },\n    \"toRecipients\": [\n      {\n        \"emailAddress\": {\n          \"address\": \"user@example.com\"\n        }\n      }\n    ]\n  },\n  \"saveToSentItems\": true\n}\n",
         "options": {}
       },
       "id": "REPLACE_ME",
