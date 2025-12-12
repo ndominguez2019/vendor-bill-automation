@@ -88,15 +88,15 @@
           "__rl": true,
           "value": "1Ea6OPRW7l4RiacA6ixwce58jaKusyQ25sC3AbhJfjl0",
           "mode": "list",
-          "cachedResultName": "AssureIV – NetSuite Truth Tables",
-          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1Ea6OPRW7l4RiacA6ixwce58jaKusyQ25sC3AbhJfjl0/edit?usp=drivesdk"
+          "cachedResultName": "NetSuite Truth Tables",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/<<YOUR_SHEET_ID>>"
         },
         "sheetName": {
           "__rl": true,
           "value": 1391321720,
           "mode": "list",
           "cachedResultName": "Invalid PO Memory",
-          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1Ea6OPRW7l4RiacA6ixwce58jaKusyQ25sC3AbhJfjl0/edit#gid=1391321720"
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/<<YOUR_SHEET_ID>>"
         },
         "options": {}
       },
