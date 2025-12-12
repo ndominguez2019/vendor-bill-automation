@@ -478,14 +478,14 @@ Use Control + Shift + m to tber\"] }}",
           "value": "1Ea6OPRW7l4RiacA6ixwce58jaKusyQ25sC3AbhJfjl0",
           "mode": "list",
           "cachedResultName": "AssureIV – NetSuite Truth Tables",
-          "cachedResultUrl": "https://docs.google.com/spreadsheets/example.com"
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/<<YOUR_SHEET_ID>>"
         },
         "sheetName": {
           "__rl": true,
           "value": 998727523,
           "mode": "list",
           "cachedResultName": "IR Memory",
-          "cachedResultUrl": "https://docs.google.com/spreadsheets/example.com"
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/<<YOUR_SHEET_ID>>"
         },
         "columns": {
           "mappingMode": "defineBelow",
@@ -658,14 +658,14 @@ Use Control + Shift + m to tber\"] }}",
           "value": "1Ea6OPRW7l4RiacA6ixwce58jaKusyQ25sC3AbhJfjl0",
           "mode": "list",
           "cachedResultName": "AssureIV – NetSuite Truth Tables",
-          "cachedResultUrl": "https://docs.google.com/spreadsheets/example.com"
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/<<YOUR_SHEET_ID>>"
         },
         "sheetName": {
           "__rl": true,
           "value": "gid=0",
           "mode": "list",
           "cachedResultName": "PO Memory",
-          "cachedResultUrl": "https://docs.google.com/spreadsheets/example.com"
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/<<YOUR_SHEET_ID>>"
         },
         "options": {}
       },
@@ -691,15 +691,15 @@ Use Control + Shift + m to tber\"] }}",
           "__rl": true,
           "value": "1Ea6OPRW7l4RiacA6ixwce58jaKusyQ25sC3AbhJfjl0",
           "mode": "list",
-          "cachedResultName": "AssureIV – NetSuite Truth Tables",
-          "cachedResultUrl": "https://docs.google.com/spreadsheets/example.com"
+          "cachedResultName": "NetSuite Truth Tables",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/<<YOUR_SHEET_ID>>"
         },
         "sheetName": {
           "__rl": true,
           "value": 998727523,
           "mode": "list",
           "cachedResultName": "IR Memory",
-          "cachedResultUrl": "https://docs.google.com/spreadsheets/example.com"
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/<<YOUR_SHEET_ID>>"
         },
         "options": {}
       },
@@ -726,8 +726,8 @@ Use Control + Shift + m to tber\"] }}",
           "__rl": true,
           "value": "1Ea6OPRW7l4RiacA6ixwce58jaKusyQ25sC3AbhJfjl0",
           "mode": "list",
-          "cachedResultName": "AssureIV – NetSuite Truth Tables",
-          "cachedResultUrl": "https://docs.google.com/spreadsheets/example.com"
+          "cachedResultName": "NetSuite Truth Tables",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/<<YOUR_SHEET_ID>>"
         },
         "sheetName": {
           "__rl": true,
