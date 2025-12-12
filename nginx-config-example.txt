@@ -1,0 +1,28 @@
+server {
+    server_name example-n8n-automation.com;
+
+    location / {
+        proxy_pass http://<YOUR_SERVER_IP>:5678;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection 'upgrade';
+        proxy_set_header Host $host;
+        proxy_cache_bypass $http_upgrade;
+    }
+
+    listen 443 ssl; # managed by Certbot
+    ssl_certificate /etc/letsencrypt/live/example-n8n-automation.com/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/example-n8n-automation.com/privkey.pem;
+    include /etc/letsencrypt/options-ssl-nginx.conf;
+    ssl_dhparam /etc/letsencrypt/ssl-dhparams.pem;
+}
+
+server {
+    if ($host = example-n8n-automation.com) {
+        return 301 https://$host$request_uri;
+    }
+
+    listen 80;
+    server_name example-n8n-automation.com;
+    return 404;
+}
