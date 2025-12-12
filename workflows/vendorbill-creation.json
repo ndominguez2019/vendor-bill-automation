@@ -1,14 +1,14 @@
 {
-  "name": "AP Automation - VendorBill Creation MVP_2",
+  "name": "Accounts Payable Modular Automation - VendorBill Creation",
   "nodes": [
     {
       "parameters": {
-        "url": "=https://graph.microsoft.com/v1.0/users/apinvoices@assureiv.com/mailFolders/inbox/messages?$top=10&$orderby=receivedDateTime desc",
+        "url": "=https://graph.microsoft.com/v1.0/users/{{ $env.EMAIL_ACCOUNT }}/mailFolders/inbox/messages?$top=10&$orderby=receivedDateTime desc",
         "authentication": "genericCredentialType",
         "genericAuthType": "oAuth2Api",
         "options": {}
       },
-      "id": "a2b0623a-a964-4d4b-a3e5-9b27178f3bd5",
+      "id": "REDACTED_CREDENTIAL_ID",
       "name": "Fetch Emails (Microsoft Graph)",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
@@ -39,7 +39,7 @@
     },
     {
       "parameters": {
-        "url": "=https://graph.microsoft.com/v1.0/users/apinvoices@assureiv.com/messages/{{ encodeURIComponent($json.messageId) }}/attachments\n",
+        "url": "=https://graph.microsoft.com/v1.0/users/{{ $env.EMAIL_ACCOUNT }}/messages/{{ encodeURIComponent($json.messageId) }}/attachments\n",
         "authentication": "genericCredentialType",
         "genericAuthType": "oAuth2Api",
         "options": {
@@ -51,7 +51,7 @@
           }
         }
       },
-      "id": "92300116-98ad-4b85-812d-4667ecdf0349",
+      "id": "REDACTED_CREDENTIAL_ID",
       "name": "Fetch Attachments",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
@@ -87,7 +87,7 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "=https://storage.googleapis.com/upload/storage/v1/b/assureiv-invoices/o?uploadType=media&name={{ encodeURIComponent($binary.data.fileName) }}\n",
+        "url": "https://storage.googleapis.com/upload/storage/v1/b/REDACTED_BUCKET_NAME/o?uploadType=media&name=...",
         "authentication": "predefinedCredentialType",
         "nodeCredentialType": "googleApi",
         "sendHeaders": true,
@@ -203,14 +203,14 @@
           "value": "102MAvZjA4o7aCRpmqVu6LBydl32dcdRAo9-ONLp59Ks",
           "mode": "list",
           "cachedResultName": "AP Invoice Tracker",
-          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/102MAvZjA4o7aCRpmqVu6LBydl32dcdRAo9-ONLp59Ks/edit?usp=drivesdk"
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/REPLACE_ME"
         },
         "sheetName": {
           "__rl": true,
           "value": "gid=0",
           "mode": "list",
           "cachedResultName": "AP Invoice Tracker - Sheet 1",
-          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/102MAvZjA4o7aCRpmqVu6LBydl32dcdRAo9-ONLp59Ks/edit#gid=0"
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/REPLACE_ME"
         },
         "columns": {
           "mappingMode": "defineBelow",
@@ -252,7 +252,7 @@
       ],
       "credentials": {
         "googleSheetsOAuth2Api": {
-          "id": "lyIbvwUMqwDkiSHw",
+          "id": "REPLACE_ME",
           "name": "Google Sheets account"
         }
       }
@@ -424,7 +424,7 @@
       "retryOnFail": true,
       "credentials": {
         "googleSheetsOAuth2Api": {
-          "id": "lyIbvwUMqwDkiSHw",
+          "id": "REPLACE_ME",
           "name": "Google Sheets account"
         }
       }
@@ -550,15 +550,15 @@
           "__rl": true,
           "value": "1Ea6OPRW7l4RiacA6ixwce58jaKusyQ25sC3AbhJfjl0",
           "mode": "list",
-          "cachedResultName": "AssureIV – NetSuite Truth Tables",
-          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1Ea6OPRW7l4RiacA6ixwce58jaKusyQ25sC3AbhJfjl0/edit?usp=drivesdk"
+          "cachedResultName": "NetSuite Truth Tables",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/REPLACE_ME"
         },
         "sheetName": {
           "__rl": true,
           "value": 998727523,
           "mode": "list",
           "cachedResultName": "IR Memory",
-          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1Ea6OPRW7l4RiacA6ixwce58jaKusyQ25sC3AbhJfjl0/edit#gid=998727523"
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/REPLACE_ME"
         },
         "filtersUI": {
           "values": [
@@ -580,7 +580,7 @@
       ],
       "credentials": {
         "googleSheetsOAuth2Api": {
-          "id": "lyIbvwUMqwDkiSHw",
+          "id": "REPLACE_ME",
           "name": "Google Sheets account"
         }
       }
@@ -591,15 +591,15 @@
           "__rl": true,
           "value": "1Ea6OPRW7l4RiacA6ixwce58jaKusyQ25sC3AbhJfjl0",
           "mode": "list",
-          "cachedResultName": "AssureIV – NetSuite Truth Tables",
-          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1Ea6OPRW7l4RiacA6ixwce58jaKusyQ25sC3AbhJfjl0/edit?usp=drivesdk"
+          "cachedResultName": "NetSuite Truth Tables",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/REPLACE_ME"
         },
         "sheetName": {
           "__rl": true,
           "value": "gid=0",
           "mode": "list",
           "cachedResultName": "PO Memory",
-          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1Ea6OPRW7l4RiacA6ixwce58jaKusyQ25sC3AbhJfjl0/edit#gid=0"
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/REPLACE_ME"
         },
         "filtersUI": {
           "values": [
@@ -611,7 +611,7 @@
         },
         "options": {}
       },
-      "id": "d7a2fd49-962e-42ec-92a7-92a8e4a096d3",
+      "id": "REPLACE_ME",
       "name": "Lookup PO Internal ID",
       "type": "n8n-nodes-base.googleSheets",
       "typeVersion": 4.3,
@@ -621,7 +621,7 @@
       ],
       "credentials": {
         "googleSheetsOAuth2Api": {
-          "id": "lyIbvwUMqwDkiSHw",
+          "id": "REPLACE_ME",
           "name": "Google Sheets account"
         }
       }
@@ -636,7 +636,7 @@
           },
           "conditions": [
             {
-              "id": "46e9931a-7c9b-4c9f-817f-c4896e87901b",
+              "id": "REPLACE_ME",
               "leftValue": "={{ $json.Status }}",
               "rightValue": "Pending Bill",
               "operator": {
@@ -649,7 +649,7 @@
         },
         "options": {}
       },
-      "id": "dfbe5c77-7745-4312-b0ee-2ca394c2462d",
+      "id": "REPLACE_ME",
       "name": "IF – Pending Bill",
       "type": "n8n-nodes-base.if",
       "typeVersion": 2,
@@ -666,14 +666,14 @@
           "value": "1OpM6d_xpnP3qotvRSk5PzoUCt2AShF2_-crVZQtL2k4",
           "mode": "list",
           "cachedResultName": "VendorBill Memory",
-          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1OpM6d_xpnP3qotvRSk5PzoUCt2AShF2_-crVZQtL2k4/edit?usp=drivesdk"
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/REPLACE_ME"
         },
         "sheetName": {
           "__rl": true,
           "value": "gid=0",
           "mode": "list",
           "cachedResultName": "VendorBill Memory",
-          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1OpM6d_xpnP3qotvRSk5PzoUCt2AShF2_-crVZQtL2k4/edit#gid=0"
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/REPLACE_ME"
         },
         "columns": {
           "mappingMode": "defineBelow",
@@ -755,7 +755,7 @@
         },
         "options": {}
       },
-      "id": "63cda302-c676-409c-b5d3-2bc7e2659e93",
+      "id": "REPLACE_ME",
       "name": "Append to VendorBill Memory",
       "type": "n8n-nodes-base.googleSheets",
       "typeVersion": 4.3,
@@ -765,7 +765,7 @@
       ],
       "credentials": {
         "googleSheetsOAuth2Api": {
-          "id": "lyIbvwUMqwDkiSHw",
+          "id": "REPLACE_ME",
           "name": "Google Sheets account"
         }
       }
@@ -786,7 +786,7 @@
           "multipleMatches": "all"
         }
       },
-      "id": "e0fb65ee-d6ac-4f85-be12-5e02383ac2ba",
+      "id": "REPLACE_ME",
       "name": "Merge",
       "type": "n8n-nodes-base.merge",
       "typeVersion": 2.1,
@@ -799,7 +799,7 @@
       "parameters": {
         "jsCode": "return $input.all().map(item => {\n  const cf = (item.json['Created From '] || '').trim();\n  const poMatch = cf.match(/PO\\d+/);\n  return {\n    json: {\n      ...item.json,\n      poNumberNormalized: poMatch ? poMatch[0] : ''\n    }\n  };\n});\n"
       },
-      "id": "c49b680e-ebd0-4532-9dfc-fc8f219e111b",
+      "id": "REPLACE_ME",
       "name": "Normalize the IR",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -813,7 +813,7 @@
         "assignments": {
           "assignments": [
             {
-              "id": "b5561257-d788-4675-a82e-61fbecfe169c",
+              "id": "REPLACE_ME",
               "name": "dummy",
               "value": "true",
               "type": "string"
@@ -822,7 +822,7 @@
         },
         "options": {}
       },
-      "id": "b99e4780-3e48-4a07-9abb-3aa4cb02c257",
+      "id": "REPLACE_ME",
       "name": "Set Dummy - No quota errors",
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.3,
@@ -839,18 +839,18 @@
           "value": "1OpM6d_xpnP3qotvRSk5PzoUCt2AShF2_-crVZQtL2k4",
           "mode": "list",
           "cachedResultName": "VendorBill Memory",
-          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1OpM6d_xpnP3qotvRSk5PzoUCt2AShF2_-crVZQtL2k4/edit?usp=drivesdk"
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/REPLACE_ME"
         },
         "sheetName": {
           "__rl": true,
           "value": "gid=0",
           "mode": "list",
           "cachedResultName": "VendorBill Memory",
-          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1OpM6d_xpnP3qotvRSk5PzoUCt2AShF2_-crVZQtL2k4/edit#gid=0"
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/REPLACE_ME"
         },
         "options": {}
       },
-      "id": "2ccd1443-be68-419c-bb24-21027d953dc5",
+      "id": "REPLACE_ME",
       "name": "Lookup VendorBill Memory",
       "type": "n8n-nodes-base.googleSheets",
       "typeVersion": 4.3,
@@ -861,7 +861,7 @@
       "alwaysOutputData": true,
       "credentials": {
         "googleSheetsOAuth2Api": {
-          "id": "lyIbvwUMqwDkiSHw",
+          "id": "REPLACE_ME",
           "name": "Google Sheets account"
         }
       }
@@ -870,7 +870,7 @@
       "parameters": {
         "jsCode": "function clean(val) {\n  return (val ?? '').toString().trim().toLowerCase();\n}\n\n// Helper to get a field regardless of trailing/leading spaces in header\nfunction get(row, fieldName) {\n  const foundKey = Object.keys(row).find(k => k.trim() === fieldName.trim());\n  return foundKey ? row[foundKey] : '';\n}\n\n// --- Get raw bills from Merge node ---\nconst billListRaw = $('Merge').all().map(i => i.json);\n\n// --- Deduplicate by PO Number + Invoice Number ---\nconst billList = Array.from(\n  new Map(\n    billListRaw.map(bill => [\n      `${clean(get(bill, \"poNumberNormalized\"))}|${clean(get(bill, \"invoiceNumber\"))}`,\n      bill\n    ])\n  ).values()\n);\n\n// --- Get rows already in VendorBill Memory ---\nconst sheetRows = $input.all().map(i => i.json);\n\n// --- Create set of existing keys ---\nconst existingKeys = new Set(\n  sheetRows\n    .map(row => `${clean(get(row, \"PO Number\"))}|${clean(get(row, \"Invoice Number\"))}`)\n    .filter(k => k !== '|') // avoid empty keys\n);\n\n// --- Filter only new bills not in sheet ---\nconst newBills = billList.filter(bill => {\n  const key = `${clean(get(bill, \"poNumberNormalized\"))}|${clean(get(bill, \"invoiceNumber\"))}`;\n  return key !== '|' && !existingKeys.has(key);\n});\n\nreturn newBills.map(bill => ({ json: bill }));\n"
       },
-      "id": "64891b38-81e2-4b70-8dc4-a81e7ea061a5",
+      "id": "REPLACE_ME",
       "name": "Compare for VENDBILL duplicates",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -882,7 +882,7 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "=https://11293253-sb1.suitetalk.api.netsuite.com/services/rest/record/v1/purchaseOrder/{{ $json[\"Internal ID\"] }}/!transform/vendorBill\n",
+        "url": "=https://REPLACE_ME.suitetalk.api.netsuite.com/services/rest/record/v1/purchaseOrder/{{ $json[\"Internal ID\"] }}/!transform/vendorBill\n",
         "authentication": "genericCredentialType",
         "genericAuthType": "oAuth2Api",
         "sendHeaders": true,
@@ -900,7 +900,7 @@
         "body": "={\n  \"memo\": \"Auto-created via AP Automation for {{ new Date().toISOString().split('T')[0] }}\"\n}\n",
         "options": {}
       },
-      "id": "cfbb85af-5f24-4287-a167-36776b23b8d4",
+      "id": "REPLACE_ME",
       "name": "POST to NetSuite - No holds Req.",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
@@ -911,8 +911,8 @@
       "alwaysOutputData": true,
       "credentials": {
         "oAuth2Api": {
-          "id": "ev7daFDajZQUwpwi",
-          "name": "NetSuite OAuth2 - API Role (1671)"
+          "id": "REPLACE_ME",
+          "name": "NetSuite OAuth2 - API Role (REPLACE_ME)"
         }
       }
     },
@@ -921,17 +921,17 @@
         "operation": "append",
         "documentId": {
           "__rl": true,
-          "value": "1ehQQx0syL0Z2BXBmqLW_NK4RBFFtFgetLc0NWtD-3Pg",
+          "value": "REPLACE_ME",
           "mode": "list",
           "cachedResultName": "AP Automation - Successful Posts Log",
-          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1ehQQx0syL0Z2BXBmqLW_NK4RBFFtFgetLc0NWtD-3Pg/edit?usp=drivesdk"
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/REPLACE_ME"
         },
         "sheetName": {
           "__rl": true,
           "value": "gid=0",
           "mode": "list",
           "cachedResultName": "AP Automation - Successful Posts Log",
-          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1ehQQx0syL0Z2BXBmqLW_NK4RBFFtFgetLc0NWtD-3Pg/edit#gid=0"
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/REPLACE_ME"
         },
         "columns": {
           "mappingMode": "defineBelow",
@@ -1013,7 +1013,7 @@
         },
         "options": {}
       },
-      "id": "52983b25-0b18-4edd-aad7-8c4d515e5a13",
+      "id": "REPLACE_ME",
       "name": "Append to Post Log",
       "type": "n8n-nodes-base.googleSheets",
       "typeVersion": 4.3,
@@ -1023,7 +1023,7 @@
       ],
       "credentials": {
         "googleSheetsOAuth2Api": {
-          "id": "lyIbvwUMqwDkiSHw",
+          "id": "REPLACE_ME",
           "name": "Google Sheets account"
         }
       }
@@ -1032,7 +1032,7 @@
       "parameters": {
         "jsCode": "const rows = $input.all().map(item => item.json);\n\n// Build HTML safely\nlet html = `<div style=\"font-family:Arial; line-height:1.5; padding:1em;\">\n<h2 style=\"color:#1a73e8;\">✅ Successful NetSuite Posts Report</h2>\n<p><strong>Total:</strong> ${rows.length}</p>\n<table border=\"1\" cellpadding=\"5\" cellspacing=\"0\" style=\"border-collapse:collapse; width:100%;\">\n<tr style=\"background-color:#f2f2f2;\">\n<th>PO Number</th>\n<th>Invoice Number</th>\n<th>Vendor</th>\n<th>Date Posted</th>\n</tr>`;\n\nrows.forEach(row => {\n  html += `<tr>\n<td>${row[\"PO Number\"] || \"N/A\"}</td>\n<td>${row[\"Invoice Number\"] || \"N/A\"}</td>\n<td>${row[\"Vendor\"] || \"N/A\"}</td>\n<td>${row[\"Date/Time\"] || \"N/A\"}</td>\n</tr>`;\n});\n\nhtml += `</table></div>`;\n\n// Escape for safe JSON\nconst safeHtml = html\n  .replace(/\\\"/g, '\\\\\"') // escape quotes\n  .replace(/\\n/g, '');   // remove line breaks\n\nreturn [\n  {\n    json: {\n      emailBody: safeHtml\n    }\n  }\n];\n"
       },
-      "id": "ec3d7938-1a73-4332-bbc4-4f88046657bd",
+      "id": "REPLACE_ME",
       "name": "Prepare Report Data – Successful Posts",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -1053,7 +1053,7 @@
         "body": "={\n  \"message\": {\n    \"subject\": \"✅ Successful NetSuite Posts Report\",\n    \"body\": {\n      \"contentType\": \"HTML\",\n      \"content\": \"{{ $json.emailBody }}\"\n    },\n    \"toRecipients\": [\n      {\n        \"emailAddress\": {\n          \"address\": \"ndominguez@assureiv.com\"\n        }\n      }\n    ]\n  },\n  \"saveToSentItems\": true\n}\n",
         "options": {}
       },
-      "id": "aac3a939-cae3-44c3-80ea-9046f67b4673",
+      "id": "REPLACE_ME",
       "name": "Send Email – Successful Posts Report",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
@@ -1063,14 +1063,14 @@
       ],
       "credentials": {
         "oAuth2Api": {
-          "id": "bA633s3OTbBjnItC",
+          "id": "REPLACE_ME",
           "name": "Microsoft Graph OAuth2"
         }
       }
     },
     {
       "parameters": {},
-      "id": "2c0b3a7f-fb0c-4c24-b9d1-2718bb48a27a",
+      "id": "REPLACE_ME",
       "name": "Merge - Values to Send",
       "type": "n8n-nodes-base.merge",
       "typeVersion": 2.1,
@@ -1083,7 +1083,7 @@
       "parameters": {
         "jsCode": "return $input.all().filter(item => {\n  const obj = item.json || {};\n\n  // Remove if object has no keys\n  if (Object.keys(obj).length === 0) return false;\n\n  // Keep only if at least one value is meaningful (not null/undefined/empty/whitespace)\n  return Object.values(obj).some(v => {\n    if (v === null || v === undefined) return false;\n    if (typeof v === 'string' && v.trim() === '') return false;\n    return true;\n  });\n});\n"
       },
-      "id": "436090b3-4e66-4790-9a81-3bd9e59d3ae6",
+      "id": "REPLACE_ME",
       "name": "Filter out empty objects",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -1117,7 +1117,7 @@
           "temperature": 0.2
         }
       },
-      "id": "70123332-6512-451c-9daa-769dce81ddeb",
+      "id": "REPLACE_ME",
       "name": "GPT - Extract Invoice Details",
       "type": "@n8n/n8n-nodes-langchain.openAi",
       "typeVersion": 1.3,
@@ -1129,7 +1129,7 @@
       "waitBetweenTries": 5000,
       "credentials": {
         "openAiApi": {
-          "id": "JJ3fMiY8C72RBwBS",
+          "id": "REPLACE_ME",
           "name": "OpenAi account"
         }
       }
@@ -1140,7 +1140,7 @@
         "combinationMode": "mergeByPosition",
         "options": {}
       },
-      "id": "1fb55174-9ebe-410b-8fcf-2864fca8ebbb",
+      "id": "REPLACE_ME",
       "name": "Merge Filter PDFs & GPT Output",
       "type": "n8n-nodes-base.merge",
       "typeVersion": 2.1,
@@ -1162,7 +1162,7 @@
         },
         "options": {}
       },
-      "id": "858f0525-2dc5-413c-a028-3a254ce1a2b3",
+      "id": "REPLACE_ME",
       "name": "Match Not Valid POs with Metadata",
       "type": "n8n-nodes-base.merge",
       "typeVersion": 2.1,
@@ -1191,7 +1191,7 @@
         "inputDataFieldName": "data",
         "options": {}
       },
-      "id": "2aa71b63-aff0-4c71-ac19-f9a3bef7b978",
+      "id": "REPLACE_ME",
       "name": "AP-automation-invalid-pos GCS",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
@@ -1201,11 +1201,11 @@
       ],
       "credentials": {
         "oAuth2Api": {
-          "id": "Piky5K0rCgrFj1u0",
+          "id": "REPLACE_ME",
           "name": "Google Vision + GCS"
         },
         "googleApi": {
-          "id": "yu0RZ0oDryGnasa4",
+          "id": "REPLACE_ME",
           "name": "Google Service Account"
         }
       }
@@ -1223,7 +1223,7 @@
           }
         }
       },
-      "id": "79129ea2-0fe2-4801-895c-c6e9434e02f7",
+      "id": "REPLACE_ME",
       "name": "Get Binary from Not Valid POs",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
@@ -1233,11 +1233,11 @@
       ],
       "credentials": {
         "oAuth2Api": {
-          "id": "Piky5K0rCgrFj1u0",
+          "id": "REPLACE_ME",
           "name": "Google Vision + GCS"
         },
         "googleApi": {
-          "id": "yu0RZ0oDryGnasa4",
+          "id": "REPLACE_ME",
           "name": "Google Service Account"
         }
       }
@@ -1247,7 +1247,7 @@
         "assignments": {
           "assignments": [
             {
-              "id": "b5561257-d788-4675-a82e-61fbecfe169c",
+              "id": "REPLACE_ME",
               "name": "dummy",
               "value": "true",
               "type": "string"
@@ -1256,7 +1256,7 @@
         },
         "options": {}
       },
-      "id": "35d437c1-7c8d-4bdb-a2bf-ae087baaaacd",
+      "id": "REPLACE_ME",
       "name": "Set Dummy - No quota errors - Not Valid POs Memory",
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.3,
@@ -1272,19 +1272,19 @@
           "__rl": true,
           "value": "1Ea6OPRW7l4RiacA6ixwce58jaKusyQ25sC3AbhJfjl0",
           "mode": "list",
-          "cachedResultName": "AssureIV – NetSuite Truth Tables",
-          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1Ea6OPRW7l4RiacA6ixwce58jaKusyQ25sC3AbhJfjl0/edit?usp=drivesdk"
+          "cachedResultName": "NetSuite Truth Tables",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/REPLACE_ME"
         },
         "sheetName": {
           "__rl": true,
           "value": 1391321720,
           "mode": "list",
           "cachedResultName": "Invalid PO Memory",
-          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1Ea6OPRW7l4RiacA6ixwce58jaKusyQ25sC3AbhJfjl0/edit#gid=1391321720"
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/REPLACE_ME"
         },
         "options": {}
       },
-      "id": "3cf2e36b-8f36-4543-9285-10cf00bf3a7f",
+      "id": "REPLACE_ME",
       "name": "LookupNotValidPOs",
       "type": "n8n-nodes-base.googleSheets",
       "typeVersion": 4.3,
@@ -1295,7 +1295,7 @@
       "alwaysOutputData": true,
       "credentials": {
         "googleSheetsOAuth2Api": {
-          "id": "lyIbvwUMqwDkiSHw",
+          "id": "REPLACE_ME",
           "name": "Google Sheets account"
         }
       }
@@ -1333,15 +1333,15 @@
           "__rl": true,
           "value": "1Ea6OPRW7l4RiacA6ixwce58jaKusyQ25sC3AbhJfjl0",
           "mode": "list",
-          "cachedResultName": "AssureIV – NetSuite Truth Tables",
-          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1Ea6OPRW7l4RiacA6ixwce58jaKusyQ25sC3AbhJfjl0/edit?usp=drivesdk"
+          "cachedResultName": "NetSuite Truth Tables",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/REPLACE_ME"
         },
         "sheetName": {
           "__rl": true,
           "value": 1391321720,
           "mode": "list",
           "cachedResultName": "Invalid PO Memory",
-          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1Ea6OPRW7l4RiacA6ixwce58jaKusyQ25sC3AbhJfjl0/edit#gid=1391321720"
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/REPLACE_ME"
         },
         "columns": {
           "mappingMode": "defineBelow",
@@ -1403,7 +1403,7 @@
         },
         "options": {}
       },
-      "id": "2f7670ac-89e3-4917-8fa0-addcf9856c62",
+      "id": "REPLACE_ME",
       "name": "Append NormalizeInvalidPOs",
       "type": "n8n-nodes-base.googleSheets",
       "typeVersion": 4.3,
@@ -1414,7 +1414,7 @@
       "alwaysOutputData": true,
       "credentials": {
         "googleSheetsOAuth2Api": {
-          "id": "lyIbvwUMqwDkiSHw",
+          "id": "REPLACE_ME",
           "name": "Google Sheets account"
         }
       }
