@@ -58,7 +58,7 @@
 // - waitBetweenTries: 5000ms
 //
 // ✅ AUTHORS & CONTRIBUTORS:
-// - Built by Nicolas Dominguez and the AP Automation Team
+// - Built by Nicolas Dominguez
 // - LLM-based invoice processing support powered by OpenAI
 //
 // 🌍 This automation is designed to be extendable, modular, and safe to share.
