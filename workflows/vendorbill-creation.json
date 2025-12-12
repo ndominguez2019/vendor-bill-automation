@@ -18,7 +18,7 @@
       ],
       "credentials": {
         "oAuth2Api": {
-          "id": "bA633s3OTbBjnItC",
+          "id": "REPLACE_ME",
           "name": "Microsoft Graph OAuth2"
         }
       }
@@ -27,7 +27,7 @@
       "parameters": {
         "jsCode": "return $json.value.map((email, index) => ({\n  json: {\n    index,\n    subject: email.subject,\n    sender: email.sender?.emailAddress?.address,\n    messageId: email.id,\n    received: email.receivedDateTime,\n    hasAttachments: email.hasAttachments\n  }\n}));\n"
       },
-      "id": "b2aa34a1-d805-496b-be8f-8c9a266f380e",
+      "id": "REPLACE_ME",
       "name": "Extract Email Metadata",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -61,7 +61,7 @@
       ],
       "credentials": {
         "oAuth2Api": {
-          "id": "bA633s3OTbBjnItC",
+          "id": "REPLACE_ME",
           "name": "Microsoft Graph OAuth2"
         }
       }
@@ -75,7 +75,7 @@
           "mimeType": "\tapplication/pdf"
         }
       },
-      "id": "02e48ba7-e380-4514-b28b-3d635ee3c4e4",
+      "id": "REPLACE_ME",
       "name": "Convert to Binary",
       "type": "n8n-nodes-base.convertToFile",
       "typeVersion": 1.1,
@@ -104,7 +104,7 @@
         "inputDataFieldName": "data",
         "options": {}
       },
-      "id": "18dc2ae2-a48b-412a-b762-cac990fec15e",
+      "id": "REPLACE_ME",
       "name": "Upload PDF to GCS",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
@@ -114,11 +114,11 @@
       ],
       "credentials": {
         "oAuth2Api": {
-          "id": "Piky5K0rCgrFj1u0",
+          "id": "REPLACE_ME",
           "name": "Google Vision + GCS"
         },
         "googleApi": {
-          "id": "yu0RZ0oDryGnasa4",
+          "id": "REPLACE_ME",
           "name": "Google Service Account"
         }
       }
@@ -144,7 +144,7 @@
         "body": "={\n  \"requests\": [\n    {\n      \"inputConfig\": {\n        \"gcsSource\": {\n          \"uri\": \"gs://assureiv-invoices/{{ $json.name }}\"\n        },\n        \"mimeType\": \"application/pdf\"\n      },\n      \"features\": [\n        {\n          \"type\": \"DOCUMENT_TEXT_DETECTION\"\n        }\n      ]\n    }\n  ]\n}\n",
         "options": {}
       },
-      "id": "68bd3edd-c0d1-4297-ada3-84acb889c548",
+      "id": "REPLACE_ME",
       "name": "OCR PDF (GCS)",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
@@ -154,11 +154,11 @@
       ],
       "credentials": {
         "oAuth2Api": {
-          "id": "Piky5K0rCgrFj1u0",
+          "id": "REPLACE_ME",
           "name": "Google Vision + GCS"
         },
         "googleApi": {
-          "id": "yu0RZ0oDryGnasa4",
+          "id": "REPLACE_ME",
           "name": "Google Service Account"
         }
       }
