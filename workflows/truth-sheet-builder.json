@@ -353,8 +353,7 @@
             "Memo": "={{ $json.Memo }}",
             "Account": "={{ $json.Account }}",
             "Name": "={{ $json.Name }}",
-            "Document Number": "={{ $json[\"Document Num
-Use Control + Shift + m to tber\"] }}",
+            "Document Number": "Document Number": "={{ $json[\"Document Number\"] }}",
             "Type": "={{ $json.Type }}",
             "Period": "={{ $json.Period }}",
             "Date": "={{ $json.Date }}"
