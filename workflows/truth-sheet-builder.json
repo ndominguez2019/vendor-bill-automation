@@ -1,5 +1,5 @@
 {
-  "name": "AssureIV – NetSuite Truth Sheet Builder",
+  "name": "NetSuite Truth Sheet Builder",
   "nodes": [
     {
       "parameters": {
@@ -23,7 +23,7 @@
     },
     {
       "parameters": {
-        "url": "https://graph.microsoft.com/v1.0/users/n8n-inbox@assureiv.com/mailFolders/inbox/messages?$top=10&$orderby=receivedDateTime desc",
+        "url": "https://graph.microsoft.com/v1.0/users/example.com/mailFolders/inbox/messages?$top=10&$orderby=receivedDateTime desc",
         "authentication": "genericCredentialType",
         "genericAuthType": "oAuth2Api",
         "options": {}
@@ -185,7 +185,7 @@
     },
     {
       "parameters": {
-        "url": "=https://graph.microsoft.com/v1.0/users/n8n-inbox@assureiv.com/messages/{{ encodeURIComponent($json.messageId) }}/attachments",
+        "url": "=https://graph.microsoft.com/v1.0/users/example.com/messages/{{ encodeURIComponent($json.messageId) }}/attachments",
         "authentication": "genericCredentialType",
         "genericAuthType": "oAuth2Api",
         "options": {}
@@ -334,15 +334,15 @@
           "__rl": true,
           "value": "1Ea6OPRW7l4RiacA6ixwce58jaKusyQ25sC3AbhJfjl0",
           "mode": "list",
-          "cachedResultName": "AssureIV – NetSuite Truth Tables",
-          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1Ea6OPRW7l4RiacA6ixwce58jaKusyQ25sC3AbhJfjl0/edit?usp=drivesdk"
+          "cachedResultName": "NetSuite Truth Tables",
+          "cachedResultUrl": "https://docs.google.com/example.com"
         },
         "sheetName": {
           "__rl": true,
           "value": "gid=0",
           "mode": "list",
           "cachedResultName": "PO Memory",
-          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1Ea6OPRW7l4RiacA6ixwce58jaKusyQ25sC3AbhJfjl0/edit#gid=0"
+          "cachedResultUrl": "https://docs.google.com/example.com"
         },
         "columns": {
           "mappingMode": "defineBelow",
@@ -353,7 +353,8 @@
             "Memo": "={{ $json.Memo }}",
             "Account": "={{ $json.Account }}",
             "Name": "={{ $json.Name }}",
-            "Document Number": "={{ $json[\"Document Number\"] }}",
+            "Document Number": "={{ $json[\"Document Num
+Use Control + Shift + m to tber\"] }}",
             "Type": "={{ $json.Type }}",
             "Period": "={{ $json.Period }}",
             "Date": "={{ $json.Date }}"
@@ -477,14 +478,14 @@
           "value": "1Ea6OPRW7l4RiacA6ixwce58jaKusyQ25sC3AbhJfjl0",
           "mode": "list",
           "cachedResultName": "AssureIV – NetSuite Truth Tables",
-          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1Ea6OPRW7l4RiacA6ixwce58jaKusyQ25sC3AbhJfjl0/edit?usp=drivesdk"
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/example.com"
         },
         "sheetName": {
           "__rl": true,
           "value": 998727523,
           "mode": "list",
           "cachedResultName": "IR Memory",
-          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1Ea6OPRW7l4RiacA6ixwce58jaKusyQ25sC3AbhJfjl0/edit#gid=998727523"
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/example.com"
         },
         "columns": {
           "mappingMode": "defineBelow",
@@ -603,7 +604,7 @@
     },
     {
       "parameters": {
-        "url": "=https://graph.microsoft.com/v1.0/users/n8n-inbox@assureiv.com/messages/{{ encodeURIComponent($json.messageId) }}/attachments",
+        "url": "=https://graph.microsoft.com/v1.0/users/example.com/messages/{{ encodeURIComponent($json.messageId) }}/attachments",
         "authentication": "genericCredentialType",
         "genericAuthType": "oAuth2Api",
         "options": {}
@@ -657,14 +658,14 @@
           "value": "1Ea6OPRW7l4RiacA6ixwce58jaKusyQ25sC3AbhJfjl0",
           "mode": "list",
           "cachedResultName": "AssureIV – NetSuite Truth Tables",
-          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1Ea6OPRW7l4RiacA6ixwce58jaKusyQ25sC3AbhJfjl0/edit?usp=drivesdk"
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/example.com"
         },
         "sheetName": {
           "__rl": true,
           "value": "gid=0",
           "mode": "list",
           "cachedResultName": "PO Memory",
-          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1Ea6OPRW7l4RiacA6ixwce58jaKusyQ25sC3AbhJfjl0/edit#gid=0"
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/example.com"
         },
         "options": {}
       },
@@ -691,14 +692,14 @@
           "value": "1Ea6OPRW7l4RiacA6ixwce58jaKusyQ25sC3AbhJfjl0",
           "mode": "list",
           "cachedResultName": "AssureIV – NetSuite Truth Tables",
-          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1Ea6OPRW7l4RiacA6ixwce58jaKusyQ25sC3AbhJfjl0/edit?usp=drivesdk"
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/example.com"
         },
         "sheetName": {
           "__rl": true,
           "value": 998727523,
           "mode": "list",
           "cachedResultName": "IR Memory",
-          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1Ea6OPRW7l4RiacA6ixwce58jaKusyQ25sC3AbhJfjl0/edit#gid=998727523"
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/example.com"
         },
         "options": {}
       },
@@ -726,14 +727,14 @@
           "value": "1Ea6OPRW7l4RiacA6ixwce58jaKusyQ25sC3AbhJfjl0",
           "mode": "list",
           "cachedResultName": "AssureIV – NetSuite Truth Tables",
-          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1Ea6OPRW7l4RiacA6ixwce58jaKusyQ25sC3AbhJfjl0/edit?usp=drivesdk"
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/example.com"
         },
         "sheetName": {
           "__rl": true,
           "value": "gid=0",
           "mode": "list",
           "cachedResultName": "PO Memory",
-          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1Ea6OPRW7l4RiacA6ixwce58jaKusyQ25sC3AbhJfjl0/edit#gid=0"
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/example.com"
         },
         "columns": {
           "mappingMode": "defineBelow",
