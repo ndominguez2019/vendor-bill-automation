@@ -1,3 +1,72 @@
+// ┌────────────────────────────────────────────────────────────────────────────┐
+// │                Vendor Bill Automation – NetSuite IR + GPT Parsing          │
+// └────────────────────────────────────────────────────────────────────────────┘
+//
+// 📌 PURPOSE:
+// This n8n workflow automates vendor invoice intake, parsing, and NetSuite
+// Item Receipt (IR) creation using Microsoft 365, Google Cloud, OpenAI GPT, and
+// Oracle NetSuite REST APIs.
+//
+// 🔁 HIGH-LEVEL WORKFLOW:
+//
+// 1. 📧 Email Intake (Microsoft Graph API):
+//    - Connects to AP inbox (e.g., apinvoices@...)
+//    - Retrieves latest 10 emails and filters for invoice PDFs.
+//
+// 2. 📎 Attachment Handling:
+//    - Downloads invoice PDF attachments.
+//    - Stores backup in Google Cloud Storage (GCS) bucket.
+//
+// 3. 🧠 LLM-Powered Parsing (OpenAI):
+//    - Uses the GPT model (via `@n8n/n8n-nodes-langchain.openAi`) to extract
+//      structured invoice fields (vendor, invoice #, date, total, line items)
+//      from raw text or OCR'd data.
+//    - Prompts are customizable and parsed output is validated before use.
+//
+// 4. 🚀 NetSuite Submission:
+//    - Submits structured invoice data to NetSuite’s Item Receipt API endpoint.
+//    - Uses token-based or OAuth2 credentials for secure access.
+//
+// 5. 📬 AP Notification:
+//    - Sends an email report on how many invoices were processed or failed.
+//
+// 🔐 SECURITY NOTES:
+// - Microsoft, Google, NetSuite, and OpenAI credentials are stored securely in n8n.
+// - All secrets (emails, credential IDs, bucket names) are redacted or env-driven.
+// - OpenAI prompt logic can be fine-tuned in the GPT node.
+//
+// 🤖 AI INTEGRATION HIGHLIGHT:
+// - GPT is used to parse semi-structured invoice data with high flexibility.
+// - Example outputs:
+//      {
+//        "vendor": "ACME Inc.",
+//        "invoiceNumber": "INV-12345",
+//        "date": "2025-12-01",
+//        "lineItems": [{ "sku": "X001", "qty": 10 }]
+//      }
+//
+// 🔧 ENV VARIABLES SUGGESTED:
+// - EMAIL_ACCOUNT = AP inbox email
+// - REPORT_EMAIL = Where to send report
+// - GCS_BUCKET_NAME = Invoice storage bucket
+// - NETSUITE_DOMAIN = SuiteTalk API domain
+//
+// 🧠 GPT CONFIG (from node):
+// - maxTokens: 2000
+// - temperature: 0.2
+// - retryOnFail: true
+// - waitBetweenTries: 5000ms
+//
+// ✅ AUTHORS & CONTRIBUTORS:
+// - Built by Nicolas Dominguez and the AP Automation Team
+// - LLM-based invoice processing support powered by OpenAI
+//
+// 🌍 This automation is designed to be extendable, modular, and safe to share.
+//    Contributions welcome — fork and build better AP bots!
+//
+
+
+
 {
   "name": "Accounts Payable Modular Automation - VendorBill Creation",
   "nodes": [
