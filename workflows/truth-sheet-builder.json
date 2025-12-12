@@ -1,3 +1,89 @@
+/*
+  ┌──────────────────────────────────────────────────────────────────────────────┐
+  │                          NetSuite Truth Sheet Builder                        │
+  └──────────────────────────────────────────────────────────────────────────────┘
+
+  📌 PURPOSE:
+  This n8n workflow automates the process of extracting financial reports from
+  Microsoft Outlook via Microsoft Graph API, processing them, and appending the
+  data to corresponding Google Sheets for record-keeping, deduplication, and
+  status tracking.
+
+  📥 INPUT SOURCE:
+  - Emails from Microsoft 365 Outlook (via Graph API)
+  - Attachments (CSV files) from emails containing either:
+      • "Purchase Order Report"
+      • "Item Receipt Report"
+
+  🧠 WORKFLOW LOGIC OVERVIEW:
+
+  1. 🔁 Trigger:
+     - Scheduled daily trigger at 7:30 AM.
+
+  2. 📧 Fetch Emails:
+     - Fetch the latest 10 emails from the inbox via Microsoft Graph API.
+     - Filter for NetSuite-related reports based on subject line keywords.
+
+  3. 🏷️ Tag Emails:
+     - Label emails as NetSuite reports using custom JavaScript logic.
+
+  4. 🧪 Filter & Branch:
+     - IF node filters only emails tagged as valid NetSuite reports.
+     - Branches into:
+         • PO Branch → for "Purchase Order Report"
+         • IR Branch → for "Item Receipt Report"
+
+  5. 📎 Fetch Attachments:
+     - Use Microsoft Graph API to fetch attachments (CSV format).
+
+  6. 🧹 Process Attachments:
+     - Extract metadata (filename, content).
+     - Convert base64 to binary.
+     - Parse CSV into JSON.
+
+  7. 📊 Normalize Data:
+     - PO and IR branches normalize records using JavaScript Code nodes.
+     - Ensures consistent schema for downstream processing.
+
+  8. 📋 Lookup Existing Records:
+     - Load current entries from Google Sheets ("PO Memory", "IR Memory").
+
+  9. 🔍 Deduplication & Change Detection:
+     - Avoids inserting duplicate PO/IR entries by generating composite keys
+       (Document Number + Internal ID).
+     - Identifies changed Status fields for updates.
+
+  10. 🧾 Append or Update:
+      - Append new entries to Google Sheets.
+      - Update existing rows if PO "Status" has changed.
+
+  🔐 SECURITY & CREDENTIALS:
+  - OAuth2 credentials required for:
+      • Microsoft Graph API (email/attachments)
+      • Google Sheets API
+  - All credentials are referenced by ID (no secrets in plain text).
+
+  📎 DEPENDENCIES:
+  - Microsoft 365 inbox access with API permissions.
+  - Google Sheet with appropriate headers and access.
+  - n8n version supporting typeVersion ≥ 2 for Code, IF, and Google Sheets nodes.
+
+  📁 SHEET STRUCTURE EXPECTED:
+  - PO Sheet Columns: Date, Period, Type, Document Number, Name, Status, Internal ID, etc.
+  - IR Sheet Columns: Same structure, with "Created From" included.
+
+  ✅ AUTHOR:
+  - Developed by [Your Name or Team]
+  - For internal automation and truth tracking of NetSuite PO/IR documents.
+
+  🔄 REUSABILITY:
+  - This workflow is modular, commented, and ready for open-source sharing.
+  - Minimal modifications needed to adapt for other email sources or formats.
+
+*/
+
+
+
 {
   "name": "NetSuite Truth Sheet Builder",
   "nodes": [
