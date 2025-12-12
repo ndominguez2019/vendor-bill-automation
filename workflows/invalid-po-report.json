@@ -1,3 +1,38 @@
+"_comment": [
+  "🚀 Purpose: Daily Invalid / No PO Match Email Report",
+  "",
+  "This workflow scans a Google Sheet ('Invalid PO Memory') and sends a formatted HTML report",
+  "via Microsoft Graph API if there are any entries reported today (based on date filtering).",
+  "",
+  "👷 Integrations Used:",
+  "- Google Sheets (OAuth2) — to retrieve structured report data",
+  "- Microsoft Graph API (OAuth2) — to send HTML email notifications",
+  "- Custom JavaScript — to filter, structure, and escape data into a clean HTML email",
+  "",
+  "🧠 Notes from the Creator:",
+  "- Built independently by Nicolas Dominguez as a proof-of-concept (POC)",
+  "- Intended to explore cross-platform orchestration across GCP, Microsoft 365, OpenAI, Oracle, and Azure",
+  "- Tested and validated — production-ready in design, though never deployed by the intended org",
+  "",
+  "🤔 Design Highlights:",
+  "- Time-based filtering via UTC ISO date (can be customized for specific timezones)",
+  "- Email formatting prioritizes readability and professional presentation",
+  "- Logic separated cleanly: trigger → fetch → filter → format → send",
+  "",
+  "💡 Opportunities for Enhancement:",
+  "- Add CSV or JSON attachment of report data",
+  "- Enable multiple recipients or dynamic CC logic",
+  "- Externalize report styling for easier edits",
+  "- Parameterize report date to allow re-runs or batch reporting",
+  "",
+  "📣 Feedback Welcome:",
+  "This was designed to stir up discussion and show what's possible across ecosystems. ",
+  "Please suggest improvements, forks, or alternate architectures.",
+  "",
+  "🧾 Ownership: Nicolas Dominguez (original author, 2024)",
+  "This is personal intellectual property and was never deployed by the original employer."
+]
+
 {
   "name": "Invalid PO Scheduled Report",
   "nodes": [
