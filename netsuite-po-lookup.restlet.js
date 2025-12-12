@@ -1,4 +1,16 @@
 /**
+ * RESTlet: PO Lookup by Transaction ID
+ * Description: Accepts a tranId (PO Number), searches NetSuite for the matching Purchase Order,
+ *              and returns the internal ID.
+ * Returns:
+ *    { success: true, tranId, internalId } if found
+ *    { success: false, message } if not found
+ */
+
+
+
+
+/**
  * @NApiVersion 2.1
  * @NScriptType Restlet
  */
